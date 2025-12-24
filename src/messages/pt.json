@@ -1,0 +1,14 @@
+{
+  "Navbar": {
+    "home": "Início",
+    "projects": "Projetos",
+    "games": "Jogos",
+    "blog": "Blog"
+  },
+  "Hero": {
+    "role": "Engenheiro de Software",
+    "description": "Criando ecossistemas digitais fluidos onde a engenharia complexa encontra o design intuitivo.",
+    "portfolio": "Ver Portfólio",
+    "cv": "Currículo (CV)"
+  }
+}

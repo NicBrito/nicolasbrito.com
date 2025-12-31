@@ -6,9 +6,12 @@
     "blog": "Blog"
   },
   "Hero": {
-    "role": "Engenheiro de Software",
-    "description": "Criando ecossistemas digitais fluidos onde a engenharia complexa encontra o design intuitivo.",
+    "name": "Nicolas Brito",
+    "role": "Software Engineer",
+    "description": "Transformando a complexidade tecnológica em experiências elegantes.",
     "portfolio": "Ver Portfólio",
-    "cv": "Currículo (CV)"
+    "cv": "Currículo (CV)",
+    "linkedin_label": "LinkedIn",
+    "github_label": "GitHub"
   }
 }

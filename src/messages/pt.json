@@ -13,5 +13,37 @@
     "cv": "Currículo (CV)",
     "linkedin_label": "LinkedIn",
     "github_label": "GitHub"
+  },
+  "Projects": {
+    "section_title": "Projetos em Destaque.",
+    "view_case": "Ver Case",
+    "visit_site": "Visitar Site",
+    "items": {
+      "project-1": {
+        "title": "Projeto 1",
+        "description": "Descrição elegante e resumida do Projeto 1.",
+        "alt": "Prévia do Projeto 1"
+      },
+      "project-2": {
+        "title": "Projeto 2",
+        "description": "Descrição elegante e resumida do Projeto 2.",
+        "alt": "Prévia do Projeto 2"
+      },
+      "project-3": {
+        "title": "Projeto 3",
+        "description": "Descrição elegante e resumida do Projeto 3.",
+        "alt": "Prévia do Projeto 3"
+      },
+      "project-4": {
+        "title": "Projeto 4",
+        "description": "Descrição elegante e resumida do Projeto 4.",
+        "alt": "Prévia do Projeto 4"
+      },
+      "project-5": {
+        "title": "Projeto 5",
+        "description": "Descrição elegante e resumida do Projeto 5.",
+        "alt": "Prévia do Projeto 5"
+      }
+    }
   }
 }

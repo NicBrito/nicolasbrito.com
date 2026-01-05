@@ -13,5 +13,37 @@
     "cv": "Resume (CV)",
     "linkedin_label": "LinkedIn",
     "github_label": "GitHub"
+  },
+  "Projects": {
+    "section_title": "Selected Projects.",
+    "view_case": "View Case",
+    "visit_site": "Visit Site",
+    "items": {
+      "project-1": {
+        "title": "Project 1",
+        "description": "Elegant and summarized description of Project 1.",
+        "alt": "Preview of Project 1"
+      },
+      "project-2": {
+        "title": "Project 2",
+        "description": "Elegant and summarized description of Project 2.",
+        "alt": "Preview of Project 2"
+      },
+      "project-3": {
+        "title": "Project 3",
+        "description": "Elegant and summarized description of Project 3.",
+        "alt": "Preview of Project 3"
+      },
+      "project-4": {
+        "title": "Project 4",
+        "description": "Elegant and summarized description of Project 4.",
+        "alt": "Preview of Project 4"
+      },
+      "project-5": {
+        "title": "Project 5",
+        "description": "Elegant and summarized description of Project 5.",
+        "alt": "Preview of Project 5"
+      }
+    }
   }
 }

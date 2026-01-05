@@ -2,7 +2,6 @@ import fs from "fs";
 import { createServer } from "https";
 import next from "next";
 import path from "path";
-import { parse } from "url";
 
 const dev = process.env.NODE_ENV !== "production";
 const app = next({ dev });
@@ -15,9 +14,8 @@ const httpsOptions = {
 
 app.prepare().then(() => {
   createServer(httpsOptions, (req, res) => {
-    const parsedUrl = parse(req.url!, true);
-    handle(req, res, parsedUrl);
+    handle(req, res);
   }).listen(3000, () => {
-    console.log(`> 🔒 Server ready on https://localhost:3000`);
+    console.log("> 🔒 Server ready on https://localhost:3000");
   });
 });

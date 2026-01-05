@@ -1,6 +1,6 @@
 "use client";
 
-import { AnimatePresence, motion, useMotionValueEvent, useScroll } from "framer-motion";
+import { AnimatePresence, motion, useMotionValueEvent, useScroll, Variants } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 
 const SECTIONS = [
@@ -66,7 +66,7 @@ export function ScrollProgress() {
     }
   };
 
-  const sidebarVariants = {
+  const sidebarVariants: Variants = {
       visible: {
           opacity: 1,
           x: 0,

@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
-import { AnimatePresence, motion, useAnimation, useInView, Variants } from "framer-motion";
+import { AnimatePresence, motion, TargetAndTransition, useAnimation, useInView, Variants } from "framer-motion";
 import { ArrowUpRight, ImageIcon, MousePointer2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
@@ -20,7 +20,7 @@ const ASSETS = {
 const PROJECTS_DATA = [
   {
     id: "project-1",
-    image: "/projects/1.png",
+    image: "",
     colSpan: "md:col-span-6",
     colors: {
       from: "bg-blue-600 dark:bg-blue-500",
@@ -29,7 +29,7 @@ const PROJECTS_DATA = [
   },
   {
     id: "project-2",
-    image: "/projects/project-2.jpg",
+    image: "",
     colSpan: "md:col-span-4",
     colors: {
       from: "bg-indigo-600 dark:bg-indigo-500",
@@ -38,7 +38,7 @@ const PROJECTS_DATA = [
   },
   {
     id: "project-3",
-    image: "/projects/project-3.jpg",
+    image: "",
     colSpan: "md:col-span-2",
     colors: {
       from: "bg-emerald-600 dark:bg-emerald-500",
@@ -47,7 +47,7 @@ const PROJECTS_DATA = [
   },
   {
     id: "project-4",
-    image: "/projects/project-4.jpg",
+    image: "",
     colSpan: "md:col-span-3",
     colors: {
       from: "bg-orange-600 dark:bg-orange-500",
@@ -56,7 +56,7 @@ const PROJECTS_DATA = [
   },
   {
     id: "project-5",
-    image: "/projects/project-5.jpg",
+    image: "",
     colSpan: "md:col-span-3",
     colors: {
       from: "bg-pink-600 dark:bg-pink-500",
@@ -117,7 +117,7 @@ const ORB_VARIANTS: Variants = {
   })
 };
 
-const BUTTON_TAP_ANIMATION = {
+const BUTTON_TAP_ANIMATION: TargetAndTransition = {
   scale: 0.95,
   transition: { type: "spring", stiffness: 400, damping: 17 }
 };

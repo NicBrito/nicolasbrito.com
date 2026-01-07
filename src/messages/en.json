@@ -3,7 +3,29 @@
     "home": "Home",
     "projects": "Projects",
     "games": "Games",
-    "blog": "Blog"
+    "blog": "Blog",
+    "menu": {
+      "project_1": "Project 1",
+      "project_2": "Project 2",
+      "project_3": "Project 3",
+      "project_4": "Project 4",
+      "project_5": "Project 5",
+      "game_1": "Game 1",
+      "game_2": "Game 2",
+      "game_3": "Game 3",
+      "game_4": "Game 4",
+      "game_5": "Game 5"
+    },
+    "headers": {
+      "explore_projects": "Explore Projects",
+      "explore_games": "Explore Games",
+      "selected_projects": "Selected Projects",
+      "selected_games": "Selected Games"
+    },
+    "actions": {
+      "explore_all_projects": "Explore All Projects",
+      "explore_all_games": "Explore All Games"
+    }
   },
   "Hero": {
     "name": "Nicolas Brito",

@@ -3,7 +3,29 @@
     "home": "Início",
     "projects": "Projetos",
     "games": "Jogos",
-    "blog": "Blog"
+    "blog": "Blog",
+    "menu": {
+      "project_1": "Projeto 1",
+      "project_2": "Projeto 2",
+      "project_3": "Projeto 3",
+      "project_4": "Projeto 4",
+      "project_5": "Projeto 5",
+      "game_1": "Jogo 1",
+      "game_2": "Jogo 2",
+      "game_3": "Jogo 3",
+      "game_4": "Jogo 4",
+      "game_5": "Jogo 5"
+    },
+    "headers": {
+      "explore_projects": "Explorar Projetos",
+      "explore_games": "Explorar Jogos",
+      "selected_projects": "Projetos Selecionados",
+      "selected_games": "Jogos Selecionados"
+    },
+    "actions": {
+      "explore_all_projects": "Explorar Todos os Projetos",
+      "explore_all_games": "Explorar Todos os Jogos"
+    }
   },
   "Hero": {
     "name": "Nicolas Brito",

@@ -31,6 +31,10 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+a, button {
+  -webkit-tap-highlight-color: transparent;
+}
+
 @layer utilities {
   .glass {
     @apply bg-white/80 dark:bg-black/80 backdrop-blur-xl border-b border-black/5 dark:border-white/10;

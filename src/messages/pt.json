@@ -67,5 +67,11 @@
         "alt": "Prévia do Projeto 5"
       }
     }
+  },
+  "ScrollProgress": {
+    "home": "Início",
+    "projects": "Projetos",
+    "games": "Jogos",
+    "blog": "Blog"
   }
 }

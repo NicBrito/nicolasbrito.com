@@ -1,40 +1,90 @@
 "use client";
 
-import { AnimatePresence, motion, useMotionValueEvent, useScroll, Variants } from "framer-motion";
+import { AnimatePresence, motion, useScroll, useTransform, Variants } from "framer-motion";
+import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 
 const SECTIONS = [
-  { id: "home", label: "Home" },
-  { id: "projects", label: "Projects" },
-  { id: "games", label: "Games" },
-  { id: "blog", label: "Blog" },
+  { id: "home", key: "home" },
+  { id: "projects", key: "projects" },
+  { id: "games", key: "games" },
+  { id: "blog", key: "blog" },
 ];
 
+const letterVariants: Variants = {
+  initial: {
+    opacity: 0,
+  },
+  animate: {
+    opacity: 1,
+    transition: {
+      duration: 0.1,
+      ease: "easeOut"
+    }
+  },
+  exit: {
+    opacity: 0,
+    transition: {
+      duration: 0.08,
+      ease: "easeIn"
+    }
+  }
+};
+
+const MorphingLabel = ({
+  text,
+  layoutIdPrefix
+}: {
+  text: string;
+  layoutIdPrefix: string;
+}) => {
+  const characters = text.split("");
+
+  return (
+    <div className="inline-flex whitespace-nowrap">
+      <AnimatePresence mode="popLayout" initial={false}>
+        {characters.map((char, i) => (
+          <motion.span
+            key={`${layoutIdPrefix}-${i}-${char}`}
+            variants={letterVariants}
+            initial="initial"
+            animate="animate"
+            exit="exit"
+            layout="position"
+            className="inline-block whitespace-pre"
+          >
+            {char}
+          </motion.span>
+        ))}
+      </AnimatePresence>
+    </div>
+  );
+};
+
 export function ScrollProgress() {
+  const t = useTranslations("ScrollProgress");
   const [activeSection, setActiveSection] = useState("home");
   const [isVisible, setIsVisible] = useState(false);
+  const [contentHeight, setContentHeight] = useState(0);
+  const [windowHeight, setWindowHeight] = useState(0);
+  const [isScrolling, setIsScrolling] = useState(false);
+  const [isBouncing, setIsBouncing] = useState(false);
   const scrollTimeout = useRef<NodeJS.Timeout | null>(null);
+  const bounceTimeout = useRef<NodeJS.Timeout | null>(null);
   const { scrollY } = useScroll();
 
-  useMotionValueEvent(scrollY, "change", (latest) => {
-    if (latest < 300) {
-      setIsVisible(false);
-      if (scrollTimeout.current) clearTimeout(scrollTimeout.current);
-      return;
-    }
+  const scrollbarThumbHeight = windowHeight > 0 && contentHeight > 0
+    ? (windowHeight / contentHeight) * windowHeight
+    : 0;
 
-    setIsVisible(true);
+  const maxScrollDistance = Math.max(contentHeight - windowHeight, 1);
+  const maxThumbPosition = Math.max(windowHeight - scrollbarThumbHeight, 0);
 
-    if (scrollTimeout.current) {
-      clearTimeout(scrollTimeout.current);
-    }
-
-    scrollTimeout.current = setTimeout(() => {
-      if (latest > 300) {
-          setIsVisible(false);
-      }
-    }, 2000);
-  });
+  const y = useTransform(
+    scrollY,
+    [0, maxScrollDistance],
+    [scrollbarThumbHeight / 2, maxThumbPosition + scrollbarThumbHeight / 2]
+  );
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -55,83 +105,108 @@ export function ScrollProgress() {
 
     return () => {
       observer.disconnect();
-      if (scrollTimeout.current) clearTimeout(scrollTimeout.current);
-    }
+    };
   }, []);
 
-  const scrollTo = (id: string) => {
-    const element = document.getElementById(id);
-    if (element) {
-      element.scrollIntoView({ behavior: "smooth" });
-    }
-  };
+  useEffect(() => {
+    const updateDimensions = () => {
+      setContentHeight(document.documentElement.scrollHeight);
+      setWindowHeight(window.innerHeight);
+    };
 
-  const sidebarVariants: Variants = {
-      visible: {
-          opacity: 1,
-          x: 0,
-          display: "flex",
-          transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] }
-      },
-      hidden: {
-          opacity: 0,
-          x: -20,
-          transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] },
-          transitionEnd: { display: "none" }
+    updateDimensions();
+    window.addEventListener("resize", updateDimensions);
+
+    return () => {
+      window.removeEventListener("resize", updateDimensions);
+    };
+  }, []);
+
+  useEffect(() => {
+    const hasScrollbar = contentHeight > windowHeight;
+
+    if (!hasScrollbar) {
+      setIsVisible(false);
+      return;
+    }
+
+    const maxScroll = contentHeight - windowHeight;
+
+    const unsubscribe = scrollY.onChange((latest) => {
+      setIsScrolling(true);
+
+      const isAtTop = latest <= 5;
+      const isAtBottom = latest >= maxScroll - 5;
+
+      if (isAtTop || isAtBottom) {
+        setIsBouncing(true);
+        if (bounceTimeout.current) clearTimeout(bounceTimeout.current);
+        bounceTimeout.current = setTimeout(() => {
+          setIsBouncing(false);
+        }, 400);
       }
-  };
+
+      if (scrollTimeout.current) clearTimeout(scrollTimeout.current);
+      scrollTimeout.current = setTimeout(() => {
+        setIsScrolling(false);
+      }, 500);
+    });
+
+    return () => {
+      unsubscribe();
+      if (scrollTimeout.current) clearTimeout(scrollTimeout.current);
+      if (bounceTimeout.current) clearTimeout(bounceTimeout.current);
+    };
+  }, [contentHeight, windowHeight, scrollY]);
+
+  useEffect(() => {
+    const hasScrollbar = contentHeight > windowHeight;
+    setIsVisible(hasScrollbar && isScrolling);
+  }, [isScrolling, contentHeight, windowHeight]);
+
+  const activeSection_data = SECTIONS.find((s) => s.id === activeSection);
+  const activeLabel = activeSection_data ? t(activeSection_data.key) : "";
 
   return (
-    <motion.div
-        initial="hidden"
-        animate={isVisible ? "visible" : "hidden"}
-        variants={sidebarVariants}
-        className="fixed left-8 top-1/2 -translate-y-1/2 z-50 flex flex-col items-center py-4"
-    >
-      {SECTIONS.map((section, index) => {
-        const isActive = activeSection === section.id;
-        const isLast = index === SECTIONS.length - 1;
-
-        return (
-          <div key={section.id} className="flex flex-col items-center relative">
-            <button
-              onClick={() => scrollTo(section.id)}
-              className="relative flex items-center justify-center focus:outline-none group"
-              aria-label={`Scroll to ${section.label}`}
-            >
-              <motion.div
-                initial={false}
-                animate={{
-                  scale: isActive ? 1 : 0.8,
-                  backgroundColor: isActive ? "var(--foreground)" : "transparent",
-                  borderColor: "var(--foreground)",
-                  borderWidth: isActive ? "0px" : "2px",
-                  opacity: isActive ? 1 : 0.3
-                }}
-                transition={{ duration: 0.3, ease: "easeInOut" }}
-                className="w-3.5 h-3.5 rounded-full box-border z-10"
-              />
-              <div className="absolute inset-0 w-10 h-10 -translate-x-1/2 -translate-y-1/2 rounded-full" />
-              <AnimatePresence>
-                {isActive && (
-                  <motion.span
-                    initial={{ opacity: 0, x: 20, filter: "blur(4px)" }}
-                    animate={{ opacity: 1, x: 30, filter: "blur(0px)" }}
-                    exit={{ opacity: 0, x: 20, filter: "blur(4px)" }}
-                    transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-                    className="absolute left-2 text-sm font-semibold tracking-tight text-foreground pointer-events-none whitespace-nowrap"
-                  >
-                    {section.label}
-                  </motion.span>
-                )}
-              </AnimatePresence>
-            </button>
-            {!isLast && (
-               <div className="w-[2px] h-10 bg-foreground/20 rounded-full my-1.5" />
-            )}
+    <AnimatePresence>
+      {isVisible && (
+        <motion.div
+          key={`scroll-progress-${isScrolling}`}
+          style={{ y }}
+          initial={{
+            x: 100,
+            opacity: 0,
+            filter: "blur(12px)"
+          }}
+          animate={{
+            x: 0,
+            opacity: 1,
+            filter: "blur(0px)",
+            scale: isBouncing ? [1, 1.15, 1] : 1,
+          }}
+          exit={{
+            x: 100,
+            opacity: 0,
+            filter: "blur(12px)"
+          }}
+          transition={{
+            duration: isScrolling ? 0.3 : 0.35,
+            ease: isScrolling ? [0.2, 0, 0.2, 1] : [0.4, 0.0, 0.2, 1],
+            scale: {
+              duration: 0.4,
+              ease: [0.34, 1.56, 0.64, 1],
+            }
+          }}
+          className="fixed right-6 top-0 -translate-y-1/2 z-50 pointer-events-none"
+        >
+          <div className="text-sm md:text-base lg:text-lg font-black tracking-wide text-foreground/80 uppercase select-none whitespace-nowrap" style={{ textRendering: "geometricPrecision" }}>
+            <MorphingLabel
+              text={activeLabel}
+              layoutIdPrefix={`scroll-section-${activeSection}`}
+            />
           </div>
-        );
-      })}
-    </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }

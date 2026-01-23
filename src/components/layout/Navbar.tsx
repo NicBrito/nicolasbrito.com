@@ -1,6 +1,8 @@
 "use client";
 
 import { Container } from "@/components/ui/Container";
+import { MorphingLabel } from "@/components/ui/MorphingLabel";
+import { morphingLabelSpeed } from "@/lib/animations";
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion, Variants } from "framer-motion";
 import { useTranslations } from "next-intl";
@@ -13,6 +15,8 @@ type NavItem = {
   href: string;
   hasDropdown?: boolean;
 };
+
+type MenuKey = keyof typeof MENU_CONFIG;
 
 const NAV_ITEMS: NavItem[] = [
   { key: "home", href: "/" },
@@ -40,117 +44,63 @@ const MENU_CONFIG = {
   }
 } as const;
 
-type MenuKey = keyof typeof MENU_CONFIG;
-
-const gridContainerVariants: Variants = {
-  hidden: { opacity: 1 },
-  visible: {
-    opacity: 1,
-    transition: {
-      delayChildren: 0.15,
-      staggerChildren: 0
+const ANIMATIONS = {
+  gridContainer: {
+    hidden: { opacity: 1 },
+    visible: {
+      opacity: 1,
+      transition: {
+        delayChildren: 0.15,
+        staggerChildren: 0
+      }
+    },
+    exit: {
+      opacity: 1,
+      transition: {
+        when: "afterChildren"
+      }
     }
-  },
-  exit: {
-    opacity: 1,
-    transition: {
-      when: "afterChildren"
+  } as Variants,
+  column: {
+    hidden: { opacity: 1 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.04
+      }
+    },
+    exit: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0
+      }
     }
-  }
-};
-
-const columnVariants: Variants = {
-  hidden: { opacity: 1 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.04
+  } as Variants,
+  contentItem: {
+    hidden: {
+      opacity: 0,
+      y: 8,
+      filter: "blur(12px)"
+    },
+    visible: {
+      opacity: 1,
+      y: 0,
+      filter: "blur(0px)",
+      transition: {
+        duration: 0.4,
+        ease: [0.2, 0.65, 0.3, 0.9]
+      }
+    },
+    exit: {
+      opacity: 0,
+      y: 0,
+      filter: "blur(10px)",
+      transition: {
+        duration: 0.2,
+        ease: "easeIn"
+      }
     }
-  },
-  exit: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0
-    }
-  }
-};
-
-const contentItemVariants: Variants = {
-  hidden: {
-    opacity: 0,
-    y: 8,
-    filter: "blur(12px)"
-  },
-  visible: {
-    opacity: 1,
-    y: 0,
-    filter: "blur(0px)",
-    transition: {
-      duration: 0.4,
-      ease: [0.2, 0.65, 0.3, 0.9]
-    }
-  },
-  exit: {
-    opacity: 0,
-    y: 0,
-    filter: "blur(10px)",
-    transition: {
-      duration: 0.2,
-      ease: "easeIn"
-    }
-  }
-};
-
-const letterVariants: Variants = {
-  initial: {
-    opacity: 0,
-  },
-  animate: {
-    opacity: 1,
-    transition: {
-      duration: 0.2,
-      ease: "easeOut"
-    }
-  },
-  exit: {
-    opacity: 0,
-    transition: {
-      duration: 0.15,
-      ease: "easeIn"
-    }
-  }
-};
-
-const MorphingLabel = ({
-  text,
-  className,
-  layoutIdPrefix
-}: {
-  text: string;
-  className?: string;
-  layoutIdPrefix: string;
-}) => {
-  const characters = text.split("");
-
-  return (
-    <div className={cn("inline-flex whitespace-nowrap", className)}>
-      <AnimatePresence mode="popLayout" initial={false}>
-        {characters.map((char, i) => (
-          <motion.span
-            key={`${layoutIdPrefix}-${i}-${char}`}
-            variants={letterVariants}
-            initial="initial"
-            animate="animate"
-            exit="exit"
-            layout="position"
-            className="inline-block whitespace-pre"
-          >
-            {char}
-          </motion.span>
-        ))}
-      </AnimatePresence>
-    </div>
-  );
+  } as Variants,
 };
 
 export function Navbar() {
@@ -427,7 +377,7 @@ export function Navbar() {
               <Container className="py-14">
                 <motion.div
                   key="static-content-wrapper"
-                  variants={gridContainerVariants}
+                  variants={ANIMATIONS.gridContainer}
                   initial="hidden"
                   animate="visible"
                   exit="exit"
@@ -436,20 +386,21 @@ export function Navbar() {
 
                   <motion.div
                     className="col-span-3 col-start-3 flex flex-col gap-3"
-                    variants={columnVariants}
+                    variants={ANIMATIONS.column}
                   >
                     <motion.div
-                      variants={contentItemVariants}
+                        variants={ANIMATIONS.contentItem}
                       className="text-xs font-semibold text-foreground/50 mb-1 uppercase tracking-wider relative min-h-[1.5em] flex items-center overflow-hidden"
                     >
                       <MorphingLabel
                         text={t(currentMenu.exploreTitleKey)}
                         layoutIdPrefix="header-explore"
                         className="text-xs font-semibold"
+                          animationDuration={morphingLabelSpeed.default}
                       />
                     </motion.div>
 
-                    <motion.div variants={contentItemVariants}>
+                      <motion.div variants={ANIMATIONS.contentItem}>
                       <Link
                         ref={(el) => setExploreItemRef(`${activeMenu}-explore`, el)}
                         href={currentMenu.href}
@@ -476,6 +427,7 @@ export function Navbar() {
                             text={t(currentMenu.exploreActionKey)}
                             layoutIdPrefix="action-explore"
                             className="text-2xl font-bold"
+                              animationDuration={morphingLabelSpeed.default}
                           />
                         </div>
                       </Link>
@@ -484,16 +436,17 @@ export function Navbar() {
 
                   <motion.div
                     className="col-span-4 flex flex-col gap-4 pl-12"
-                    variants={columnVariants}
+                    variants={ANIMATIONS.column}
                   >
                     <motion.div
-                      variants={contentItemVariants}
+                        variants={ANIMATIONS.contentItem}
                       className="text-xs font-semibold text-foreground/50 mb-2 uppercase tracking-wider relative min-h-[1.5em] flex items-center overflow-hidden"
                     >
                       <MorphingLabel
                         text={t(currentMenu.selectedTitleKey)}
                         layoutIdPrefix="header-selected"
                         className="text-xs font-semibold"
+                          animationDuration={morphingLabelSpeed.default}
                       />
                     </motion.div>
 
@@ -501,7 +454,7 @@ export function Navbar() {
                       {currentMenu.items.map((itemKey, index) => (
                         <motion.div
                           key={index}
-                          variants={contentItemVariants}
+                          variants={ANIMATIONS.contentItem}
                         >
                           <Link
                             ref={(el) => setDropdownItemRef(`${activeMenu}-${itemKey}`, el)}
@@ -530,6 +483,7 @@ export function Navbar() {
                                 text={t(`menu.${itemKey}`)}
                                 layoutIdPrefix={`item-${index}`}
                                 className="text-[15px] font-medium"
+                                animationDuration={morphingLabelSpeed.default}
                               />
                             </div>
                           </Link>

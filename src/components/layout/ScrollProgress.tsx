@@ -1,8 +1,11 @@
 "use client";
 
-import { AnimatePresence, motion, useScroll, useTransform, Variants } from "framer-motion";
-import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
+import { AnimatePresence, motion, useScroll, useTransform, Variants } from "framer-motion";
+
+import { MorphingLabel } from "@/components/ui/MorphingLabel";
+import { morphingLabelSpeed } from "@/lib/animations";
 
 const SECTIONS = [
   { id: "home", key: "home" },
@@ -10,56 +13,6 @@ const SECTIONS = [
   { id: "games", key: "games" },
   { id: "blog", key: "blog" },
 ];
-
-const letterVariants: Variants = {
-  initial: {
-    opacity: 0,
-  },
-  animate: {
-    opacity: 1,
-    transition: {
-      duration: 0.1,
-      ease: "easeOut"
-    }
-  },
-  exit: {
-    opacity: 0,
-    transition: {
-      duration: 0.08,
-      ease: "easeIn"
-    }
-  }
-};
-
-const MorphingLabel = ({
-  text,
-  layoutIdPrefix
-}: {
-  text: string;
-  layoutIdPrefix: string;
-}) => {
-  const characters = text.split("");
-
-  return (
-    <div className="inline-flex whitespace-nowrap">
-      <AnimatePresence mode="popLayout" initial={false}>
-        {characters.map((char, i) => (
-          <motion.span
-            key={`${layoutIdPrefix}-${i}-${char}`}
-            variants={letterVariants}
-            initial="initial"
-            animate="animate"
-            exit="exit"
-            layout="position"
-            className="inline-block whitespace-pre"
-          >
-            {char}
-          </motion.span>
-        ))}
-      </AnimatePresence>
-    </div>
-  );
-};
 
 export function ScrollProgress() {
   const t = useTranslations("ScrollProgress");
@@ -203,6 +156,7 @@ export function ScrollProgress() {
             <MorphingLabel
               text={activeLabel}
               layoutIdPrefix={`scroll-section-${activeSection}`}
+              animationDuration={morphingLabelSpeed.fast}
             />
           </div>
         </motion.div>

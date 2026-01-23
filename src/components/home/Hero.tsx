@@ -1,21 +1,26 @@
 "use client";
 
-import { Container } from "@/components/ui/Container";
-import { cn } from "@/lib/utils";
-import { motion, TargetAndTransition, Variants } from "framer-motion";
-import { ArrowRight, Briefcase, FileText, Github, Linkedin } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
+import { Briefcase, FileText, Github, Linkedin } from "lucide-react";
+import { motion, Variants } from "framer-motion";
 
-const PORTFOLIO_URL = "https://portfolio.myapps.page/nicolasbrito";
-const LINKEDIN_URL = "https://www.linkedin.com/in/nicolasbritobarros/";
-const GITHUB_URL = "https://github.com/NicBrito";
-const CV_PT = "/resume/Currículo Nicolas.pdf";
-const CV_EN = "/resume/Nicolas's CV.pdf";
+import { Container } from "@/components/ui/Container";
+import { PrimaryButton } from "@/components/ui/PrimaryButton";
+import { SecondaryButton } from "@/components/ui/SecondaryButton";
+import { SocialLink } from "@/components/ui/SocialLink";
 
-const BUTTON_BASE_CLASS = "inline-flex items-center justify-center rounded-full transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:opacity-50 disabled:pointer-events-none px-10 py-4 text-lg font-semibold tracking-tight min-w-[160px] md:min-w-[200px]";
-const BUTTON_PRIMARY_CLASS = "bg-accent text-white hover:bg-accent/90 shadow-xl shadow-black/20";
-const BUTTON_SECONDARY_CLASS = "bg-white/5 hover:bg-white/10 text-foreground border border-white/10 backdrop-blur-md shadow-lg shadow-black/5";
-const SOCIAL_ICON_CLASS = "group relative p-4 rounded-[22%] bg-gradient-to-br from-white/10 to-white/5 border border-white/15 text-foreground/70 hover:text-white hover:from-white/15 hover:to-white/10 transition-colors duration-300 backdrop-blur-md shadow-[inset_0_0_15px_rgba(255,255,255,0.05)] hover:shadow-[inset_0_0_20px_rgba(255,255,255,0.1)] focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background overflow-hidden";
+const SOCIAL_LINKS = {
+  linkedin: "https://www.linkedin.com/in/nicolasbritobarros/",
+  github: "https://github.com/NicBrito",
+};
+
+const ACTION_LINKS = {
+  portfolio: "https://portfolio.myapps.page/nicolasbrito",
+  resume: {
+    pt: "/resume/Currículo Nicolas.pdf",
+    en: "/resume/Nicolas's CV.pdf",
+  },
+};
 
 const textVariants: Variants = {
   hidden: { opacity: 0, y: 40, filter: "blur(10px)" },
@@ -44,15 +49,10 @@ const tunnelVariant: Variants = {
   }),
 };
 
-const buttonTapAnimation: TargetAndTransition = {
-  scale: 0.95,
-  transition: { type: "spring", stiffness: 400, damping: 17 }
-};
-
 export function Hero() {
   const t = useTranslations("Hero");
   const locale = useLocale();
-  const cvUrl = locale === "pt" ? CV_PT : CV_EN;
+  const cvUrl = locale === "pt" ? ACTION_LINKS.resume.pt : ACTION_LINKS.resume.en;
 
   return (
     <section id="home" className="relative w-full h-[100dvh] flex flex-col justify-center overflow-hidden bg-background">
@@ -110,29 +110,23 @@ export function Hero() {
             variants={textVariants}
             className="flex flex-col md:flex-row items-center justify-center gap-6 pt-12"
           >
-            <motion.a
-              href={PORTFOLIO_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              whileTap={buttonTapAnimation}
-              className={cn(BUTTON_BASE_CLASS, BUTTON_PRIMARY_CLASS, "group gap-3 w-full md:w-auto")}
+            <PrimaryButton
+              href={ACTION_LINKS.portfolio}
+              showArrow
+              className="px-10 py-4 text-lg min-w-[160px] md:min-w-[200px] w-full md:w-auto"
             >
               <Briefcase size={20} className="mb-0.5" />
               {t('portfolio')}
-              <ArrowRight size={20} className="transition-transform group-hover:translate-x-1 ml-1" />
-            </motion.a>
+            </PrimaryButton>
 
-            <motion.a
+            <SecondaryButton
               href={cvUrl}
               download
-              target="_blank"
-              rel="noopener noreferrer"
-              whileTap={buttonTapAnimation}
-              className={cn(BUTTON_BASE_CLASS, BUTTON_SECONDARY_CLASS, "gap-3 w-full md:w-auto")}
+              className="px-10 py-4 text-lg min-w-[160px] md:min-w-[200px] w-full md:w-auto"
             >
               <FileText size={20} className="mb-0.5" />
               {t('cv')}
-            </motion.a>
+            </SecondaryButton>
           </motion.div>
         </motion.div>
       </Container>
@@ -143,26 +137,16 @@ export function Hero() {
         transition={{ delay: 1.0, duration: 0.8, ease: "easeOut" }}
         className="absolute bottom-12 left-0 right-0 flex justify-center gap-6 z-30"
       >
-        <motion.a
-          href={LINKEDIN_URL}
-          target="_blank"
-          rel="noreferrer"
-          whileTap={buttonTapAnimation}
-          className={SOCIAL_ICON_CLASS}
-          aria-label={t('linkedin_label')}
-        >
-          <Linkedin size={28} strokeWidth={1.5} className="group-hover:scale-110 transition-transform duration-300 relative z-10" />
-        </motion.a>
-        <motion.a
-          href={GITHUB_URL}
-          target="_blank"
-          rel="noreferrer"
-          whileTap={buttonTapAnimation}
-          className={SOCIAL_ICON_CLASS}
-          aria-label={t('github_label')}
-        >
-          <Github size={28} strokeWidth={1.5} className="group-hover:scale-110 transition-transform duration-300 relative z-10" />
-        </motion.a>
+        <SocialLink
+          href={SOCIAL_LINKS.linkedin}
+          icon={<Linkedin size={28} strokeWidth={1.5} />}
+          label={t('linkedin_label')}
+        />
+        <SocialLink
+          href={SOCIAL_LINKS.github}
+          icon={<Github size={28} strokeWidth={1.5} />}
+          label={t('github_label')}
+        />
       </motion.div>
     </section>
   );

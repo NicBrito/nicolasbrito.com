@@ -15,18 +15,19 @@ export interface PrimaryButtonProps {
   rel?: string;
   icon?: ReactNode;
   showArrow?: boolean;
+  ariaLabel?: string;
 }
 
 const TAP_ANIMATION: TargetAndTransition = {
-  scale: 0.95,
-  transition: { type: "spring", stiffness: 400, damping: 17 },
+  scale: 0.97,
+  transition: { duration: 0.08, ease: "easeInOut" },
 };
 
 const BUTTON_BASE_CLASS =
-  "inline-flex items-center justify-center rounded-full transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:opacity-50 disabled:pointer-events-none font-semibold tracking-tight";
+  "inline-flex items-center justify-center rounded-full transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:opacity-50 disabled:pointer-events-none disabled:cursor-not-allowed font-semibold tracking-tight cursor-pointer";
 
 const BUTTON_PRIMARY_CLASS =
-  "bg-accent text-white hover:bg-accent/90 shadow-xl shadow-black/20";
+  "bg-accent text-white hover:bg-accent/90 focus-visible:bg-accent/90 shadow-xl shadow-black/20";
 
 export function PrimaryButton({
   children,
@@ -38,6 +39,7 @@ export function PrimaryButton({
   download,
   rel = "noopener noreferrer",
   showArrow = false,
+  ariaLabel,
 }: PrimaryButtonProps) {
   const buttonClass = cn(BUTTON_BASE_CLASS, BUTTON_PRIMARY_CLASS, className);
 
@@ -45,7 +47,7 @@ export function PrimaryButton({
     <>
       {children}
       {showArrow && (
-        <span className="transition-transform group-hover:translate-x-1 ml-1">
+        <span className="transition-transform group-hover:translate-x-1 group-focus-visible:translate-x-1 ml-1">
           →
         </span>
       )}
@@ -61,6 +63,8 @@ export function PrimaryButton({
         rel={rel}
         whileTap={TAP_ANIMATION}
         className={cn(buttonClass, "group gap-3")}
+        aria-label={ariaLabel}
+        tabIndex={disabled ? -1 : 0}
       >
         {content}
       </motion.a>
@@ -73,6 +77,9 @@ export function PrimaryButton({
       disabled={disabled}
       whileTap={TAP_ANIMATION}
       className={cn(buttonClass, "gap-3")}
+      aria-label={ariaLabel}
+      type="button"
+      tabIndex={disabled ? -1 : 0}
     >
       {content}
     </motion.button>

@@ -7,7 +7,6 @@ import { AnimatePresence, motion, Variants } from "framer-motion";
 import { ImageIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
-import Link from "next/link";
 import { ReactNode, useEffect, useLayoutEffect, useRef, useState } from "react";
 
 const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect;
@@ -36,11 +35,10 @@ const DEFAULT_CARD_VARIANTS: Variants = {
   hover: {
     scale: 1.02,
     transition: {
-      type: "spring",
-      stiffness: 400,
-      damping: 20,
-    }
-  }
+      duration: 0.28,
+      ease: [0.2, 0, 0.2, 1],
+    },
+  },
 };
 
 const ORB_VARIANTS: Variants = {
@@ -101,17 +99,23 @@ export function ProjectCard({
 
   const defaultActions = (
     <>
-      <Link href={`/projects/${id}`} className="flex-1 sm:flex-none outline-none" tabIndex={-1}>
-        <PrimaryButton className="w-full rounded-full px-6 py-3 text-sm font-medium">
-          {t("view_case")}
-        </PrimaryButton>
-      </Link>
+      <PrimaryButton
+        href={`/projects/${id}`}
+        target="_self"
+        rel={undefined}
+        className="w-full sm:w-auto sm:min-w-40 rounded-full px-6 py-3 text-sm font-medium justify-center"
+      >
+        {t("view_case")}
+      </PrimaryButton>
 
-      <Link href={`/projects/${id}/demo`} className="flex-1 sm:flex-none outline-none" tabIndex={-1}>
-        <SecondaryButton className="w-full rounded-full px-6 py-3 text-sm font-medium">
-          {t("visit_site")}
-        </SecondaryButton>
-      </Link>
+      <SecondaryButton
+        href={`/projects/${id}/demo`}
+        target="_self"
+        rel={undefined}
+        className="w-full sm:w-auto sm:min-w-40 rounded-full px-6 py-3 text-sm font-medium justify-center"
+      >
+        {t("visit_site")}
+      </SecondaryButton>
     </>
   );
 
@@ -121,10 +125,10 @@ export function ProjectCard({
       whileHover="hover"
       onHoverStart={onHover}
       className={cn(
-        "group relative flex flex-col justify-end overflow-hidden rounded-[40px]",
+        "group relative flex flex-col justify-end overflow-hidden rounded-4xl sm:rounded-[40px]",
         "border border-black/5 dark:border-white/5",
         "bg-[#f5f5f7] dark:bg-[#101010]",
-        "shadow-sm hover:shadow-2xl transition-shadow duration-500",
+        "shadow-sm hover:shadow-2xl transition-shadow duration-450",
         colSpan,
         className
       )}
@@ -184,7 +188,7 @@ export function ProjectCard({
                 style={{ backgroundImage: `url("${ASSETS.noise}")` }}
               />
 
-              <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/10 to-transparent pointer-events-none" />
+              <div className="absolute inset-x-0 bottom-0 h-1/3 bg-linear-to-t from-black/10 to-transparent pointer-events-none" />
             </motion.div>
           )}
         </AnimatePresence>
@@ -221,24 +225,24 @@ export function ProjectCard({
               }}
             />
 
-            <div className="absolute inset-x-0 bottom-0 h-[60%] bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none z-20 opacity-90" />
+            <div className="absolute inset-x-0 bottom-0 h-[60%] bg-linear-to-t from-black/80 via-black/20 to-transparent pointer-events-none z-20 opacity-90" />
 
             <div className="absolute inset-0 shadow-[inset_0_0_100px_rgba(0,0,0,0.1)] pointer-events-none z-20" />
           </motion.div>
         )}
       </div>
 
-      <div className="relative z-30 p-10 flex flex-col gap-4 transform transition-transform duration-500 translate-y-2 group-hover:translate-y-0 group-focus-within:translate-y-0">
+      <div className="relative z-30 flex flex-col gap-3.5 p-7 sm:p-10 transform transition-transform duration-500 translate-y-1.5 group-hover:translate-y-0 group-focus-within:translate-y-0">
         <div>
-          <h3 className="text-3xl font-bold text-white tracking-tight mb-2 drop-shadow-lg">
+          <h3 className="mb-2 text-2xl sm:text-3xl font-bold text-white tracking-tight drop-shadow-lg">
             {t(`items.${id}.title`)}
           </h3>
-          <p className="text-lg text-white/90 font-medium leading-relaxed max-w-lg line-clamp-2 drop-shadow-md">
+          <p className="text-base sm:text-lg text-white/90 font-medium leading-relaxed max-w-lg line-clamp-2 drop-shadow-md">
             {t(`items.${id}.description`)}
           </p>
         </div>
 
-        <div className="flex items-center gap-3 mt-2 transition-all duration-300 opacity-0 translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 group-focus-within:opacity-100 group-focus-within:translate-y-0">
+        <div className="mt-2 flex w-full flex-col gap-2.5 sm:flex-row sm:items-center transition-all duration-300 opacity-100 translate-y-0 pointer-events-auto sm:opacity-0 sm:translate-y-4 sm:pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto group-focus-within:opacity-100 group-focus-within:translate-y-0 group-focus-within:pointer-events-auto">
           {actions || defaultActions}
         </div>
       </div>

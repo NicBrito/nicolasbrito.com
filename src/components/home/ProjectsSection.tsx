@@ -1,14 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { motion, useReducedMotion, Variants } from "framer-motion";
 import { useTranslations } from "next-intl";
-import { motion, useAnimation, useInView, Variants } from "framer-motion";
 
 import { ProjectCard } from "@/components/ui/ProjectCard";
 
-let hasAnimatedInSession = false;
-
-const PROJECTS_DATA = [
+const PROJECTS = [
   {
     id: "project-1",
     image: "",
@@ -56,40 +53,70 @@ const PROJECTS_DATA = [
   },
 ];
 
+const ELEGANT_EASE: [number, number, number, number] = [0.22, 1, 0.36, 1];
+
 const ANIMATIONS = {
+  heading: {
+    hidden: { opacity: 0, y: 24 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: 0.78, ease: ELEGANT_EASE },
+    },
+  } as Variants,
+  headingReduced: {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: { duration: 0.25, ease: [0.2, 0, 0.2, 1] },
+    },
+  } as Variants,
   card: {
     hidden: {
       opacity: 0,
-      y: 60,
-      scale: 1,
-      filter: "blur(12px)"
+      y: 40,
+      filter: "blur(3px)",
     },
     visible: {
       opacity: 1,
       y: 0,
-      scale: 1,
       filter: "blur(0px)",
       transition: {
-        duration: 0.9,
-        ease: [0.25, 0.4, 0.25, 1],
+        duration: 0.88,
+        ease: ELEGANT_EASE,
       },
     },
     hover: {
       scale: 1.02,
       transition: {
-        type: "spring",
-        stiffness: 400,
-        damping: 20,
-      }
-    }
+        duration: 0.24,
+        ease: [0.2, 0, 0.2, 1],
+      },
+    },
   } as Variants,
-  container: {
+  cardReduced: {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
       transition: {
-        staggerChildren: 0.12,
-        delayChildren: 0.2,
+        duration: 0.3,
+        ease: [0.2, 0, 0.2, 1],
+      },
+    },
+    hover: {
+      scale: 1.01,
+      transition: {
+        duration: 0.2,
+        ease: [0.2, 0, 0.2, 1],
+      },
+    },
+  } as Variants,
+  cardsContainer: {
+    hidden: {},
+    visible: {
+      transition: {
+        staggerChildren: 0.1,
+        delayChildren: 0.08,
       },
     },
   } as Variants,
@@ -97,43 +124,42 @@ const ANIMATIONS = {
 
 export function ProjectsSection() {
   const t = useTranslations("Projects");
-  const controls = useAnimation();
-  const ref = useRef(null);
-  const isInView = useInView(ref, { once: true, margin: "-10%" });
-  const [shouldSkipAnimation] = useState(hasAnimatedInSession);
+  const shouldReduceMotion = useReducedMotion();
 
-  useEffect(() => {
-    if (shouldSkipAnimation) {
-      controls.set("visible");
-    } else if (isInView) {
-      controls.start("visible");
-      hasAnimatedInSession = true;
-    }
-  }, [controls, isInView, shouldSkipAnimation]);
+  const headingVariants = shouldReduceMotion ? ANIMATIONS.headingReduced : ANIMATIONS.heading;
+  const cardVariants = shouldReduceMotion ? ANIMATIONS.cardReduced : ANIMATIONS.card;
 
   return (
-    <section id="projects" className="w-full py-32 bg-background relative overflow-hidden">
-      <div className="w-full max-w-[1280px] mx-auto px-6 relative z-10">
+    <section
+      id="projects"
+      aria-labelledby="projects-section-title"
+      className="relative w-full overflow-hidden bg-background py-20 md:py-32"
+    >
+      <div className="relative z-10 mx-auto w-full max-w-7xl px-4 sm:px-6">
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-100px" }}
-          transition={{ duration: 0.8, ease: "easeOut" }}
-          className="mb-24"
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-60px" }}
+          variants={headingVariants}
+          className="mb-10 md:mb-24"
         >
-          <h2 className="text-4xl md:text-6xl font-semibold tracking-tight text-foreground">
+          <h2
+            id="projects-section-title"
+            className="text-4xl md:text-6xl font-semibold tracking-tight text-foreground"
+            style={{ textRendering: "geometricPrecision" }}
+          >
             {t("section_title")}
           </h2>
         </motion.div>
 
         <motion.div
-          ref={ref}
-          variants={ANIMATIONS.container}
+          variants={ANIMATIONS.cardsContainer}
           initial="hidden"
-          animate={controls}
-          className="grid grid-cols-1 md:grid-cols-6 gap-6 auto-rows-[550px]"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-30px" }}
+          className="grid grid-cols-1 gap-5 auto-rows-[500px] sm:gap-6 sm:auto-rows-[540px] md:grid-cols-6"
         >
-          {PROJECTS_DATA.map((project, index) => (
+          {PROJECTS.map((project, index) => (
             <ProjectCard
               key={project.id}
               id={project.id}
@@ -141,7 +167,7 @@ export function ProjectsSection() {
               colSpan={project.colSpan}
               colors={project.colors}
               priority={index < 2}
-              variants={ANIMATIONS.card}
+              variants={cardVariants}
             />
           ))}
         </motion.div>

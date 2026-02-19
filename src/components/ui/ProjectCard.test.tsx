@@ -28,18 +28,18 @@ vi.mock("next/link", () => ({
 }));
 
 vi.mock("@/components/ui/PrimaryButton", () => ({
-  PrimaryButton: ({ children, className, ...props }: any) => (
-    <button className={className} {...props}>
+  PrimaryButton: ({ children, className, href, ...props }: any) => (
+    <a className={className} href={href} {...props}>
       {children}
-    </button>
+    </a>
   ),
 }));
 
 vi.mock("@/components/ui/SecondaryButton", () => ({
-  SecondaryButton: ({ children, className, ...props }: any) => (
-    <button className={className} {...props}>
+  SecondaryButton: ({ children, className, href, ...props }: any) => (
+    <a className={className} href={href} {...props}>
       {children}
-    </button>
+    </a>
   ),
 }));
 
@@ -216,5 +216,15 @@ describe("ProjectCard", () => {
 
     expect(viewCaseLink).toHaveAttribute("href", "/projects/test-project");
     expect(visitSiteLink).toHaveAttribute("href", "/projects/test-project/demo");
+  });
+
+  it("KEEPS DEFAULT ACTION LINKS IN TAB ORDER", () => {
+    render(<ProjectCard {...DEFAULT_PROPS} />);
+
+    const viewCaseLink = screen.getByText("View Case").closest("a");
+    const visitSiteLink = screen.getByText("Visit Site").closest("a");
+
+    expect(viewCaseLink).not.toHaveAttribute("tabindex", "-1");
+    expect(visitSiteLink).not.toHaveAttribute("tabindex", "-1");
   });
 });

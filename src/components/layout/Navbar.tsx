@@ -113,7 +113,7 @@ export function Navbar() {
 
   const navItemRefs = useRef<Map<string, HTMLAnchorElement>>(new Map());
   const dropdownItemRefs = useRef<Map<string, HTMLAnchorElement>>(new Map());
-  const isKeyboardNavigation = useRef(false);
+  const escKeyPressedRef = useRef(false);
 
   const setNavItemRef = useCallback((key: string, el: HTMLAnchorElement | null) => {
     if (el) {
@@ -162,52 +162,73 @@ export function Navbar() {
   ) => {
     const menuConfig = MENU_CONFIG[menuKey];
     const isLastItem = itemIndex === menuConfig.items.length - 1;
+    const currentNavIndex = NAV_ITEMS.findIndex(item => item.key === menuKey);
 
-    if (e.key === "Tab" && !e.shiftKey && isLastItem) {
-      const currentNavIndex = NAV_ITEMS.findIndex(item => item.key === menuKey);
-      const nextNavItem = NAV_ITEMS[currentNavIndex + 1];
-
-      if (nextNavItem) {
-        e.preventDefault();
-        isKeyboardNavigation.current = true;
-        const nextRef = navItemRefs.current.get(nextNavItem.key);
-        if (nextRef) {
-          nextRef.focus();
-        }
-      } else {
-        setActiveMenu(null);
-        setFocusedNavItem(null);
-      }
-    } else if (e.key === "Escape") {
+    if (e.key === "Escape") {
       e.preventDefault();
+      escKeyPressedRef.current = true;
       const navRef = navItemRefs.current.get(menuKey);
       if (navRef) {
         navRef.focus();
       }
       setActiveMenu(null);
+      setFocusedNavItem(menuKey);
+    } else if (e.key === "Tab" && !e.shiftKey && isLastItem) {
+      const nextNavItem = NAV_ITEMS[currentNavIndex + 1];
+
+      if (nextNavItem) {
+        e.preventDefault();
+        setActiveMenu(null);
+        setTimeout(() => {
+          const nextRef = navItemRefs.current.get(nextNavItem.key);
+          if (nextRef) {
+            nextRef.focus();
+          }
+        }, 100);
+      } else {
+        setActiveMenu(null);
+        setFocusedNavItem(null);
+      }
+    } else if (e.key === "Tab" && e.shiftKey && itemIndex === 0) {
+      e.preventDefault();
+      const exploreLink = exploreItemRefs.current.get(`${menuKey}-explore`);
+      if (exploreLink) {
+        exploreLink.focus();
+      }
     }
   }, []);
 
   const handleNavItemFocus = useCallback((item: NavItem) => {
     setFocusedNavItem(item.key);
-    if (item.hasDropdown) {
-      setActiveMenu(item.key as MenuKey);
-    } else {
-      setActiveMenu(null);
-    }
   }, []);
 
   const handleNavItemBlur = useCallback((e: React.FocusEvent) => {
     const relatedTarget = e.relatedTarget as HTMLElement;
-    const isMovingToDropdown = relatedTarget?.closest('[data-dropdown-item]');
-    const isMovingToNavItem = relatedTarget?.closest('[data-nav-item]');
+    const isMovingWithinNavbar = relatedTarget?.closest('nav[role="navigation"]');
 
-    if (!isMovingToDropdown && !isMovingToNavItem) {
+    if (!isMovingWithinNavbar) {
       setFocusedNavItem(null);
       setActiveMenu(null);
-    } else if (isMovingToDropdown) {
+      escKeyPressedRef.current = false;
+    } else {
       setFocusedNavItem(null);
     }
+  }, []);
+
+  useEffect(() => {
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Tab") {
+        const focusedElement = document.activeElement as HTMLElement;
+        const nav = document.querySelector('nav[role="navigation"]');
+
+        if (!nav?.contains(focusedElement) && focusedElement !== document.body) {
+          escKeyPressedRef.current = false;
+        }
+      }
+    };
+
+    document.addEventListener("keydown", handleGlobalKeyDown);
+    return () => document.removeEventListener("keydown", handleGlobalKeyDown);
   }, []);
 
   const handleNavItemKeyDown = useCallback((
@@ -215,21 +236,53 @@ export function Navbar() {
     item: NavItem,
     itemIndex: number
   ) => {
-    if (e.key === "Tab" && !e.shiftKey && item.hasDropdown && activeMenu === item.key) {
+    if (e.key === "Escape") {
       e.preventDefault();
+      setActiveMenu(null);
+      setFocusedNavItem(null);
+    } else if (e.key === "Tab" && !e.shiftKey) {
+      if (item.hasDropdown && !escKeyPressedRef.current) {
+        e.preventDefault();
+        setActiveMenu(item.key as MenuKey);
+        setTimeout(() => {
+          const exploreLink = exploreItemRefs.current.get(`${item.key}-explore`);
+          if (exploreLink) {
+            exploreLink.focus();
+          }
+        }, 100);
+      } else if (item.key === "blog") {
+        e.preventDefault();
+        setActiveMenu(null);
+        setFocusedNavItem(null);
+        setTimeout(() => {
+          const focusableSelector = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+          const focusableElements = Array.from(
+            document.querySelectorAll(focusableSelector)
+          ) as HTMLElement[];
 
-      setTimeout(() => {
-        const exploreLink = exploreItemRefs.current.get(`${item.key}-explore`);
-        if (exploreLink) {
-          exploreLink.focus();
-        }
-      }, 50);
-    } else if (e.key === "Tab" && e.shiftKey && itemIndex === 0) {
-      setActiveMenu(null);
-      setFocusedNavItem(null);
-    } else if (e.key === "Escape") {
-      setActiveMenu(null);
-      setFocusedNavItem(null);
+          const nav = document.querySelector('nav[role="navigation"]');
+          const navBottom = nav?.getBoundingClientRect().bottom || 0;
+
+          const nextElement = focusableElements.find(el => {
+            const isInNav = nav?.contains(el);
+            const rect = el.getBoundingClientRect();
+            return !isInNav && rect.top >= navBottom - 10;
+          });
+
+          if (nextElement) {
+            nextElement.focus();
+          }
+        }, 0);
+      } else if (escKeyPressedRef.current) {
+        escKeyPressedRef.current = false;
+      }
+    } else if (e.key === "Tab" && e.shiftKey) {
+      if (item.hasDropdown && activeMenu === item.key) {
+        e.preventDefault();
+        setActiveMenu(null);
+      } else if (itemIndex === 0 && activeMenu === null) {
+        setFocusedNavItem(null);
+      }
     }
   }, [activeMenu]);
 
@@ -237,9 +290,19 @@ export function Navbar() {
     e: React.KeyboardEvent,
     menuKey: MenuKey
   ) => {
-    if (e.key === "Tab" && !e.shiftKey) {
+    const menuConfig = MENU_CONFIG[menuKey];
+
+    if (e.key === "Escape") {
       e.preventDefault();
-      const menuConfig = MENU_CONFIG[menuKey];
+      escKeyPressedRef.current = true;
+      const navRef = navItemRefs.current.get(menuKey);
+      if (navRef) {
+        navRef.focus();
+      }
+      setActiveMenu(null);
+      setFocusedNavItem(menuKey);
+    } else if (e.key === "Tab" && !e.shiftKey) {
+      e.preventDefault();
       const firstItemKey = `${menuKey}-${menuConfig.items[0]}`;
       const firstDropdownItem = dropdownItemRefs.current.get(firstItemKey);
       if (firstDropdownItem) {
@@ -251,13 +314,6 @@ export function Navbar() {
       if (navRef) {
         navRef.focus();
       }
-    } else if (e.key === "Escape") {
-      e.preventDefault();
-      const navRef = navItemRefs.current.get(menuKey);
-      if (navRef) {
-        navRef.focus();
-      }
-      setActiveMenu(null);
     }
   }, []);
 
@@ -301,8 +357,8 @@ export function Navbar() {
             ease: "easeInOut"
           }}
         >
-          <Container className="flex items-end justify-between md:justify-center h-auto pt-6 pb-1">
-            <ul className="hidden md:flex items-center gap-12">
+          <Container className="flex items-end justify-center h-auto pt-6 pb-1">
+            <ul className="flex items-center gap-6 sm:gap-8 md:gap-12 flex-wrap justify-center">
               {NAV_ITEMS.map((item, index) => (
                 <li key={item.key} className="relative">
                   <Link
@@ -313,8 +369,8 @@ export function Navbar() {
                     aria-haspopup={item.hasDropdown ? "menu" : undefined}
                     aria-expanded={item.hasDropdown && activeMenu === item.key ? true : undefined}
                     className={cn(
-                      "text-sm font-medium tracking-wide transition-all duration-300 antialiased block leading-none",
-                      "py-1.5 px-3 -mx-3 rounded-full",
+                      "text-xs sm:text-sm font-medium tracking-wide transition-all duration-300 antialiased block leading-none",
+                      "py-1.5 px-2 sm:px-3 -mx-2 sm:-mx-3 rounded-full",
                       "outline-none focus:bg-white/20 focus-visible:bg-white/20",
                       isNavbarVisible
                         ? (
@@ -371,21 +427,21 @@ export function Navbar() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0, transition: { duration: 0.2 } }}
-                className="absolute bottom-0 left-0 w-full h-[1px] bg-black/5 dark:bg-white/5 z-50"
+                className="absolute bottom-0 left-0 w-full h-px bg-black/5 dark:bg-white/5 z-50"
               />
 
-              <Container className="py-14">
+              <Container className="py-8 sm:py-10 md:py-14">
                 <motion.div
                   key="static-content-wrapper"
                   variants={ANIMATIONS.gridContainer}
                   initial="hidden"
                   animate="visible"
                   exit="exit"
-                  className="grid grid-cols-12 gap-8 w-full"
+                  className="grid grid-cols-1 sm:grid-cols-12 gap-6 sm:gap-8 w-full"
                 >
 
                   <motion.div
-                    className="col-span-3 col-start-3 flex flex-col gap-3"
+                    className="col-span-1 sm:col-span-3 sm:col-start-3 flex flex-col gap-3"
                     variants={ANIMATIONS.column}
                   >
                     <motion.div
@@ -415,10 +471,11 @@ export function Navbar() {
                         onKeyDown={(e) => handleExploreKeyDown(e, activeMenu!)}
                         onBlur={(e) => {
                           const relatedTarget = e.relatedTarget as HTMLElement;
-                          const isMovingToNavItem = relatedTarget?.closest('[data-nav-item]');
-                          const isMovingToDropdownItem = relatedTarget?.closest('[data-dropdown-item]');
-                          if (!isMovingToNavItem && !isMovingToDropdownItem) {
+                          const isMovingWithinNavbar = relatedTarget?.closest('nav[role="navigation"]');
+
+                          if (!isMovingWithinNavbar) {
                             setActiveMenu(null);
+                            setFocusedNavItem(null);
                           }
                         }}
                       >
@@ -435,7 +492,7 @@ export function Navbar() {
                   </motion.div>
 
                   <motion.div
-                    className="col-span-4 flex flex-col gap-4 pl-12"
+                    className="col-span-1 sm:col-span-4 flex flex-col gap-4 pl-0 sm:pl-12"
                     variants={ANIMATIONS.column}
                   >
                     <motion.div
@@ -470,11 +527,11 @@ export function Navbar() {
                             onKeyDown={(e) => handleDropdownKeyDown(e, index, activeMenu!)}
                             onBlur={(e) => {
                               const relatedTarget = e.relatedTarget as HTMLElement;
-                              const isMovingToNavItem = relatedTarget?.closest('[data-nav-item]');
-                              const isMovingToDropdownItem = relatedTarget?.closest('[data-dropdown-item]');
+                              const isMovingWithinNavbar = relatedTarget?.closest('nav[role="navigation"]');
 
-                              if (!isMovingToNavItem && !isMovingToDropdownItem) {
+                              if (!isMovingWithinNavbar) {
                                 setActiveMenu(null);
+                                setFocusedNavItem(null);
                               }
                             }}
                           >

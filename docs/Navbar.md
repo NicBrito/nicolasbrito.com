@@ -27,10 +27,36 @@ Complete architectural and visual overhaul of the `Navbar` component to achieve 
 ### 3.1. "Virtual Navigation Map" (Keyboard Logic)
 Instead of relying on the browser's default DOM order (which fails with conditional rendering like `AnimatePresence`), we engineered a programmatic focus management system:
 * **Ref Mapping:** Utilization of `useRef<Map>` to maintain direct references to all interactive elements (`navItemRefs`, `dropdownItemRefs`, `exploreItemRefs`).
-* **Smart Trapping:**
-    * **Tab on Parent:** The `handleNavItemKeyDown` intercepts the Tab key when a dropdown is open, forcing focus into the "Explore" header inside the menu (via `setTimeout` to await render).
-    * **Tab on Last Item:** The `handleDropdownKeyDown` detects the end of the list, closes the menu (`setActiveMenu(null)`), and mathematically calculates the next Navbar item to focus on, creating a seamless linear flow.
-    * **Escape:** Instantly closes the menu and returns focus to the specific trigger element that opened it.
+* **Fine-Grained Focus Control:**
+    * **Preventing Double Return:** TAB navigation now properly prevents the browser's default behavior with explicit `e.preventDefault()` calls at strategic points, ensuring focus moves exactly where intended without cascading regressions.
+    * **Tab on Parent (With Dropdown):** When a user tabs on a dropdown-enabled nav item (Projects/Games) with the dropdown open, focus moves to the "Explore" header inside the menu (via `setTimeout` to await render).
+    * **Tab on Non-Dropdown Items:** When tabbing on "Home" or "Blog" (items without dropdowns), the dropdown automatically closes to prevent visual clutter.
+    * **Tab on Last Dropdown Item:** The `handleDropdownKeyDown` function detects the end of the list, closes the dropdown, and mathematically calculates the next Navbar item to focus on. If there's no next item, focus exits cleanly without returning to the start.
+    * **Shift+Tab Navigation:** Reverse tabbing works seamlessly in both directions (forward through dropdown items, backward to "Explore" header).
+    * **Escape Key:** Instantly closes the menu and returns focus to the specific trigger element that opened it.
+
+#### 3.1.1 Recent Corrections (February 2026)
+**Problem (Initial):** Double return to start when reaching navigation end via keyboard.
+**Solution (v1):** Refactored keyboard handlers to use explicit focus control and prevented default browser behavior where appropriate.
+
+**Problem (Refinement):** Focus trap at navbar end—TAB wasn't escaping to elements below navbar (Hero section buttons, etc.).
+**Solution (v2):** Modified `handleDropdownKeyDown` to only call `e.preventDefault()` when there's a definite next nav item to focus. When reaching the *actual* end of navbar (last dropdown item with no next nav item), the event is allowed to bubble naturally, permitting the browser to focus the next focusable element on the page.
+
+**Problem (Further Refinement):** BLOG→Hero navigation failure after ESC key press in dropdown menus.
+**Solution (v3):**
+- Introduced `escKeyPressedRef` flag to differentiate between natural TAB progression and post-ESC TAB behavior
+- When ESC is pressed in dropdown, flag is set and dropdown closes without reopening on next TAB
+- Added global Tab key monitor via `useEffect` to reset flag when focus leaves navbar
+- Implemented DOM querying fallback for BLOG→Hero transition using `getBoundingClientRect()` to find next focusable element below navbar
+
+**Code Logic:**
+- **Dropdown Last Item + Tab Forward:**
+  - If next nav item exists: `e.preventDefault()` + programmatic focus to next nav
+  - If no next nav item: Allow default behavior, letting browser focus elements below navbar ✓
+- **Shift+Tab from First Dropdown Item:** Always `e.preventDefault()` + focus "Explore" header
+- **ESC Key Intelligence:** `escKeyPressedRef.current = true` prevents dropdown reopening on immediate TAB after ESC
+- **BLOG→Hero Navigation:** DOM query finds first focusable element with `rect.top >= navBottom - 10`
+- **Result:** Clean focus exit from navbar → Hero section buttons, scroll, etc. become naturally focusable via Tab
 
 ### 3.2. Visual State ("The Ghost Pill")
 * **Design Pattern:** A single visual indicator (a translucent pill `bg-white/20`) that appears **exclusively during keyboard navigation**.
@@ -51,6 +77,17 @@ Instead of relying on the browser's default DOM order (which fails with conditio
 ### 4.2. Performance Optimization
 * **Hardware Acceleration:** Strategic use of `will-change: opacity, filter` on high-frequency animation elements (morphing characters) to offload rendering to the GPU.
 * **Layout Stability:** Usage of `AnimatePresence` with `mode="popLayout"` ensures layout thrashing is minimized during rapid state switches between "Projects" and "Games".
+
+### 4.3. Mobile Responsiveness
+* **Adaptive Layout:** Navbar is fully responsive across all screen sizes with progressive enhancement:
+  - **Mobile (default):** `text-xs`, `gap-6`, `px-2` - compact but touchable
+  - **Small screens (sm):** `text-sm`, `gap-8`, `px-3` - increased spacing
+  - **Desktop (md+):** `gap-12` - full desktop spacing for mouse precision
+* **Dropdown Adaptation:**
+  - **Mobile:** Single column layout (`grid-cols-1`), reduced padding (`py-8`), no left padding on content columns
+  - **Desktop:** 12-column grid (`sm:grid-cols-12`) with precise column positioning (`sm:col-span-3 sm:col-start-3`), full padding (`md:py-14`, `sm:pl-12`)
+* **Touch-Friendly Targets:** All interactive elements meet WCAG minimum 44x44px touch target size on mobile devices
+* **Visibility Strategy:** Removed `hidden md:flex` to ensure navbar renders on all devices - mobile-first approach with `flex-wrap` and `justify-center` for graceful content reflow
 
 ## 5. Final State (Checkpoint)
 The `Navbar.tsx` is now a production-grade component that merges high-fidelity motion design with robust engineering. It successfully handles the complexity of React's conditional rendering while providing a native-app-like experience for both mouse and keyboard users.

@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { AnimatePresence, motion, useMotionValueEvent, useScroll, useTransform } from "framer-motion";
 import { useTranslations } from "next-intl";
-import { AnimatePresence, motion, useScroll, useTransform, Variants } from "framer-motion";
+import { useEffect, useRef, useState } from "react";
 
 import { MorphingLabel } from "@/components/ui/MorphingLabel";
 import { morphingLabelSpeed } from "@/lib/animations";
@@ -12,19 +12,46 @@ const SECTIONS = [
   { id: "projects", key: "projects" },
   { id: "games", key: "games" },
   { id: "blog", key: "blog" },
-];
+] as const;
+
+const DEFAULT_SECTION_ID = SECTIONS[0].id;
+const SECTION_OBSERVER_ROOT_MARGIN = "-50% 0px -50% 0px";
+
+const SCROLL_EDGE_THRESHOLD_PX = 5;
+const BOUNCE_RESET_DELAY_MS = 400;
+const SCROLL_IDLE_DELAY_MS = 500;
+
+const BASE_MOTION = {
+  x: 100,
+  opacity: 0,
+  filter: "blur(12px)",
+};
+
+const BOUNCE_SCALE_KEYFRAMES = [1, 1.15, 1];
+const ENTER_EASE: [number, number, number, number] = [0.2, 0, 0.2, 1];
+const EXIT_EASE: [number, number, number, number] = [0.4, 0.0, 0.2, 1];
+const BOUNCE_EASE: [number, number, number, number] = [0.34, 1.56, 0.64, 1];
+const ENTER_DURATION = 0.3;
+const EXIT_DURATION = 0.35;
+const BOUNCE_DURATION = 0.4;
+
+const CONTAINER_CLASS = "fixed right-6 top-0 -translate-y-1/2 z-50 pointer-events-none will-change-transform";
+const LABEL_CLASS = "text-sm md:text-base lg:text-lg font-black tracking-wide text-foreground/80 uppercase select-none whitespace-nowrap";
+
+type Section = (typeof SECTIONS)[number];
+type SectionId = Section["id"];
 
 export function ScrollProgress() {
   const t = useTranslations("ScrollProgress");
-  const [activeSection, setActiveSection] = useState("home");
-  const [isVisible, setIsVisible] = useState(false);
+  const [activeSection, setActiveSection] = useState<SectionId>(DEFAULT_SECTION_ID);
   const [contentHeight, setContentHeight] = useState(0);
   const [windowHeight, setWindowHeight] = useState(0);
   const [isScrolling, setIsScrolling] = useState(false);
   const [isBouncing, setIsBouncing] = useState(false);
-  const scrollTimeout = useRef<NodeJS.Timeout | null>(null);
-  const bounceTimeout = useRef<NodeJS.Timeout | null>(null);
+  const scrollTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const bounceTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { scrollY } = useScroll();
+  const hasScrollbar = contentHeight > windowHeight;
 
   const scrollbarThumbHeight = windowHeight > 0 && contentHeight > 0
     ? (windowHeight / contentHeight) * windowHeight
@@ -40,15 +67,19 @@ export function ScrollProgress() {
   );
 
   useEffect(() => {
+    const sectionIds = new Set<SectionId>(SECTIONS.map(({ id }) => id));
+
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            setActiveSection(entry.target.id);
+          const sectionId = entry.target.id as SectionId;
+
+          if (entry.isIntersecting && sectionIds.has(sectionId)) {
+            setActiveSection(sectionId);
           }
         });
       },
-      { rootMargin: "-50% 0px -50% 0px" }
+      { rootMargin: SECTION_OBSERVER_ROOT_MARGIN }
     );
 
     SECTIONS.forEach(({ id }) => {
@@ -63,96 +94,92 @@ export function ScrollProgress() {
 
   useEffect(() => {
     const updateDimensions = () => {
-      setContentHeight(document.documentElement.scrollHeight);
-      setWindowHeight(window.innerHeight);
+      const nextContentHeight = document.documentElement.scrollHeight;
+      const nextWindowHeight = window.innerHeight;
+
+      setContentHeight((previous) => (previous === nextContentHeight ? previous : nextContentHeight));
+      setWindowHeight((previous) => (previous === nextWindowHeight ? previous : nextWindowHeight));
     };
 
     updateDimensions();
+    const resizeObserver = new ResizeObserver(updateDimensions);
+    resizeObserver.observe(document.documentElement);
+    resizeObserver.observe(document.body);
+
     window.addEventListener("resize", updateDimensions);
+    window.addEventListener("load", updateDimensions);
 
     return () => {
       window.removeEventListener("resize", updateDimensions);
+      window.removeEventListener("load", updateDimensions);
+      resizeObserver.disconnect();
     };
   }, []);
 
   useEffect(() => {
-    const hasScrollbar = contentHeight > windowHeight;
-
     if (!hasScrollbar) {
-      setIsVisible(false);
-      return;
+      if (scrollTimeout.current) clearTimeout(scrollTimeout.current);
+      if (bounceTimeout.current) clearTimeout(bounceTimeout.current);
     }
+  }, [hasScrollbar]);
+
+  useMotionValueEvent(scrollY, "change", (latest) => {
+    if (!hasScrollbar) return;
+
+    setIsScrolling((prev) => (prev ? prev : true));
 
     const maxScroll = contentHeight - windowHeight;
+    const isAtTop = latest <= SCROLL_EDGE_THRESHOLD_PX;
+    const isAtBottom = latest >= maxScroll - SCROLL_EDGE_THRESHOLD_PX;
 
-    const unsubscribe = scrollY.onChange((latest) => {
-      setIsScrolling(true);
+    if (isAtTop || isAtBottom) {
+      setIsBouncing((prev) => (prev ? prev : true));
+      if (bounceTimeout.current) clearTimeout(bounceTimeout.current);
+      bounceTimeout.current = setTimeout(() => {
+        setIsBouncing(false);
+      }, BOUNCE_RESET_DELAY_MS);
+    }
 
-      const isAtTop = latest <= 5;
-      const isAtBottom = latest >= maxScroll - 5;
+    if (scrollTimeout.current) clearTimeout(scrollTimeout.current);
+    scrollTimeout.current = setTimeout(() => {
+      setIsScrolling(false);
+    }, SCROLL_IDLE_DELAY_MS);
+  });
 
-      if (isAtTop || isAtBottom) {
-        setIsBouncing(true);
-        if (bounceTimeout.current) clearTimeout(bounceTimeout.current);
-        bounceTimeout.current = setTimeout(() => {
-          setIsBouncing(false);
-        }, 400);
-      }
-
-      if (scrollTimeout.current) clearTimeout(scrollTimeout.current);
-      scrollTimeout.current = setTimeout(() => {
-        setIsScrolling(false);
-      }, 500);
-    });
-
+  useEffect(() => {
     return () => {
-      unsubscribe();
       if (scrollTimeout.current) clearTimeout(scrollTimeout.current);
       if (bounceTimeout.current) clearTimeout(bounceTimeout.current);
     };
-  }, [contentHeight, windowHeight, scrollY]);
+  }, []);
 
-  useEffect(() => {
-    const hasScrollbar = contentHeight > windowHeight;
-    setIsVisible(hasScrollbar && isScrolling);
-  }, [isScrolling, contentHeight, windowHeight]);
-
-  const activeSection_data = SECTIONS.find((s) => s.id === activeSection);
-  const activeLabel = activeSection_data ? t(activeSection_data.key) : "";
+  const activeSectionData = SECTIONS.find((section) => section.id === activeSection) ?? SECTIONS[0];
+  const activeLabel = t(activeSectionData.key);
 
   return (
     <AnimatePresence>
-      {isVisible && (
+      {hasScrollbar && isScrolling && (
         <motion.div
-          key={`scroll-progress-${isScrolling}`}
           style={{ y }}
-          initial={{
-            x: 100,
-            opacity: 0,
-            filter: "blur(12px)"
-          }}
+          initial={BASE_MOTION}
           animate={{
             x: 0,
             opacity: 1,
             filter: "blur(0px)",
-            scale: isBouncing ? [1, 1.15, 1] : 1,
+            scale: isBouncing ? BOUNCE_SCALE_KEYFRAMES : 1,
           }}
-          exit={{
-            x: 100,
-            opacity: 0,
-            filter: "blur(12px)"
-          }}
+          exit={BASE_MOTION}
           transition={{
-            duration: isScrolling ? 0.3 : 0.35,
-            ease: isScrolling ? [0.2, 0, 0.2, 1] : [0.4, 0.0, 0.2, 1],
+            duration: isScrolling ? ENTER_DURATION : EXIT_DURATION,
+            ease: isScrolling ? ENTER_EASE : EXIT_EASE,
             scale: {
-              duration: 0.4,
-              ease: [0.34, 1.56, 0.64, 1],
+              duration: BOUNCE_DURATION,
+              ease: BOUNCE_EASE,
             }
           }}
-          className="fixed right-6 top-0 -translate-y-1/2 z-50 pointer-events-none"
+          className={CONTAINER_CLASS}
         >
-          <div className="text-sm md:text-base lg:text-lg font-black tracking-wide text-foreground/80 uppercase select-none whitespace-nowrap" style={{ textRendering: "geometricPrecision" }}>
+          <div className={LABEL_CLASS} style={{ textRendering: "geometricPrecision" }}>
             <MorphingLabel
               text={activeLabel}
               layoutIdPrefix={`scroll-section-${activeSection}`}

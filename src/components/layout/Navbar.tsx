@@ -142,17 +142,23 @@ export function Navbar() {
   }, []);
 
   useEffect(() => {
-    let timeout: NodeJS.Timeout;
+    let timeout: NodeJS.Timeout | undefined;
 
     if (activeMenu) {
-      setIsNavbarVisible(true);
+      timeout = setTimeout(() => {
+        setIsNavbarVisible(true);
+      }, 0);
     } else {
       timeout = setTimeout(() => {
         setIsNavbarVisible(false);
       }, 850);
     }
 
-    return () => clearTimeout(timeout);
+    return () => {
+      if (timeout) {
+        clearTimeout(timeout);
+      }
+    };
   }, [activeMenu]);
 
   const handleDropdownKeyDown = useCallback((

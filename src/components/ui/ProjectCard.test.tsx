@@ -1,6 +1,31 @@
 import { render, screen } from "@testing-library/react";
+import type { AnchorHTMLAttributes, HTMLAttributes, ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { ProjectCard } from "./ProjectCard";
+
+type MockNextImageProps = {
+  src: string;
+  alt: string;
+  priority?: boolean;
+  fill?: boolean;
+};
+
+type MockLinkProps = {
+  children: ReactNode;
+  href: string;
+} & Omit<AnchorHTMLAttributes<HTMLAnchorElement>, "href">;
+
+type MockButtonProps = {
+  children: ReactNode;
+} & AnchorHTMLAttributes<HTMLAnchorElement>;
+
+type MockMotionDivProps = {
+  children: ReactNode;
+} & HTMLAttributes<HTMLDivElement>;
+
+type MockAnimatePresenceProps = {
+  children: ReactNode;
+};
 
 vi.mock("next-intl", () => ({
   useTranslations: () => (key: string) => {
@@ -16,28 +41,28 @@ vi.mock("next-intl", () => ({
 }));
 
 vi.mock("next/image", () => ({
-  default: ({ src, alt, priority, fill, ...props }: any) => (
-    <img src={src} alt={alt} {...props} />
+  default: ({ src, alt }: MockNextImageProps) => (
+    <span role="img" aria-label={alt} data-src={src} />
   ),
 }));
 
 vi.mock("next/link", () => ({
-  default: ({ children, href, ...props }: any) => (
+  default: ({ children, href, ...props }: MockLinkProps) => (
     <a href={href} {...props}>{children}</a>
   ),
 }));
 
 vi.mock("@/components/ui/PrimaryButton", () => ({
-  PrimaryButton: ({ children, className, href, ...props }: any) => (
-    <a className={className} href={href} {...props}>
+  PrimaryButton: ({ children, ...props }: MockButtonProps) => (
+    <a {...props}>
       {children}
     </a>
   ),
 }));
 
 vi.mock("@/components/ui/SecondaryButton", () => ({
-  SecondaryButton: ({ children, className, href, ...props }: any) => (
-    <a className={className} href={href} {...props}>
+  SecondaryButton: ({ children, ...props }: MockButtonProps) => (
+    <a {...props}>
       {children}
     </a>
   ),
@@ -45,9 +70,15 @@ vi.mock("@/components/ui/SecondaryButton", () => ({
 
 vi.mock("framer-motion", () => ({
   motion: {
-    div: ({ children, whileHover, onHoverStart, ...props }: any) => <div {...props}>{children}</div>,
+    div: ({ children, ...props }: MockMotionDivProps) => {
+      const domProps = { ...props } as Record<string, unknown>;
+      delete domProps.whileHover;
+      delete domProps.onHoverStart;
+
+      return <div {...(domProps as HTMLAttributes<HTMLDivElement>)}>{children}</div>;
+    },
   },
-  AnimatePresence: ({ children }: any) => <div>{children}</div>,
+  AnimatePresence: ({ children }: MockAnimatePresenceProps) => <div>{children}</div>,
 }));
 
 const DEFAULT_PROPS = {
@@ -99,9 +130,9 @@ describe("ProjectCard", () => {
       />
     );
 
-    const img = screen.getByAltText("Test project image");
+    const img = screen.getByRole("img", { name: "Test project image" });
     expect(img).toBeInTheDocument();
-    expect(img).toHaveAttribute("src", "/test-image.jpg");
+    expect(img).toHaveAttribute("data-src", "/test-image.jpg");
   });
 
   it("RENDERS CUSTOM ACTIONS WHEN PROVIDED", () => {
@@ -166,7 +197,7 @@ describe("ProjectCard", () => {
       />
     );
 
-    const img = screen.getByAltText("Test project image");
+    const img = screen.getByRole("img", { name: "Test project image" });
     expect(img).toBeInTheDocument();
   });
 
@@ -179,7 +210,7 @@ describe("ProjectCard", () => {
       />
     );
 
-    const img = screen.getByAltText("Test project image");
+    const img = screen.getByRole("img", { name: "Test project image" });
     expect(img).toBeInTheDocument();
   });
 
@@ -197,14 +228,14 @@ describe("ProjectCard", () => {
   });
 
   it("RENDERS GLASSMORPHISM BLUR LAYER WITH IMAGE", () => {
-    const { container } = render(
+    render(
       <ProjectCard
         {...DEFAULT_PROPS}
         image="/test-image.jpg"
       />
     );
 
-    const img = screen.getByAltText("Test project image");
+    const img = screen.getByRole("img", { name: "Test project image" });
     expect(img).toBeInTheDocument();
   });
 

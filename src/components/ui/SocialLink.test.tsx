@@ -1,10 +1,22 @@
 import { render, screen } from "@testing-library/react";
+import type { AnchorHTMLAttributes, ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { SocialLink } from "./SocialLink";
 
+type MockMotionAnchorProps = {
+  children: ReactNode;
+} & AnchorHTMLAttributes<HTMLAnchorElement>;
+
 vi.mock("framer-motion", () => ({
   motion: {
-    a: ({ children, whileHover, onHoverStart, ...props }: any) => <a {...props}>{children}</a>,
+    a: ({ children, ...props }: MockMotionAnchorProps) => {
+      const domProps = { ...props } as Record<string, unknown>;
+      delete domProps.whileTap;
+      delete domProps.whileHover;
+      delete domProps.whileFocus;
+
+      return <a {...(domProps as AnchorHTMLAttributes<HTMLAnchorElement>)}>{children}</a>;
+    },
   },
 }));
 

@@ -51,3 +51,27 @@ a, button {
     @apply bg-background/80 backdrop-blur-xl border-b border-foreground/10;
   }
 }
+
+@media (hover: hover) and (pointer: fine) {
+  .project-card .project-card-content {
+    transform: translateY(4.25rem);
+  }
+
+  .project-card:hover .project-card-content,
+  .project-card:focus-within .project-card-content {
+    transform: translateY(0);
+  }
+
+  .project-card .project-card-actions {
+    opacity: 0;
+    transform: translateY(0.5rem);
+    pointer-events: none;
+  }
+
+  .project-card:hover .project-card-actions,
+  .project-card:focus-within .project-card-actions {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+  }
+}

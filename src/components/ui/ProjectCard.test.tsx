@@ -217,7 +217,7 @@ describe("ProjectCard", () => {
   it("RENDERS WITH DEFAULT COLSPAN WHEN NOT PROVIDED", () => {
     const { container } = render(<ProjectCard {...DEFAULT_PROPS} />);
 
-    const card = container.querySelector(".md\\:col-span-4");
+    const card = container.querySelector(".xl\\:col-span-4");
     expect(card).toBeInTheDocument();
   });
 

@@ -364,7 +364,7 @@ export function Navbar() {
           }}
         >
           <Container className="flex items-end justify-center h-auto pt-6 pb-1">
-            <ul className="flex items-center gap-6 sm:gap-8 md:gap-12 flex-wrap justify-center">
+            <ul className="flex items-center gap-[clamp(1.5rem,4vw,3rem)] flex-wrap justify-center">
               {NAV_ITEMS.map((item, index) => (
                 <li key={item.key} className="relative">
                   <Link
@@ -375,7 +375,7 @@ export function Navbar() {
                     aria-haspopup={item.hasDropdown ? "menu" : undefined}
                     aria-expanded={item.hasDropdown && activeMenu === item.key ? true : undefined}
                     className={cn(
-                      "text-xs sm:text-sm font-medium tracking-wide transition-all duration-300 antialiased block leading-none",
+                      "text-[clamp(0.75rem,2vw,0.9375rem)] font-medium tracking-wide transition-all duration-300 antialiased block leading-none",
                       "py-1.5 px-2 sm:px-3 -mx-2 sm:-mx-3 rounded-full",
                       "outline-none focus:bg-white/20 focus-visible:bg-white/20",
                       isNavbarVisible
@@ -436,14 +436,14 @@ export function Navbar() {
                 className="absolute bottom-0 left-0 w-full h-px bg-black/5 dark:bg-white/5 z-50"
               />
 
-              <Container className="py-8 sm:py-10 md:py-14">
+              <Container className="py-[clamp(2rem,5vw,3.5rem)]">
                 <motion.div
                   key="static-content-wrapper"
                   variants={ANIMATIONS.gridContainer}
                   initial="hidden"
                   animate="visible"
                   exit="exit"
-                  className="grid grid-cols-1 sm:grid-cols-12 gap-6 sm:gap-8 w-full"
+                  className="grid grid-cols-1 sm:grid-cols-12 gap-[clamp(1.5rem,3vw,2rem)] w-full"
                 >
 
                   <motion.div
@@ -485,11 +485,11 @@ export function Navbar() {
                           }
                         }}
                       >
-                        <div className="text-2xl font-bold text-foreground/75 tracking-tight group-hover:text-foreground group-focus:text-foreground group-focus-visible:text-foreground transition-colors duration-200 min-h-[1.5em] flex items-center overflow-hidden">
+                        <div className="text-[clamp(1.25rem,3.75vw,2rem)] font-bold text-foreground/75 tracking-tight group-hover:text-foreground group-focus:text-foreground group-focus-visible:text-foreground transition-colors duration-200 min-h-[1.5em] flex items-center overflow-hidden">
                           <MorphingLabel
                             text={t(currentMenu.exploreActionKey)}
                             layoutIdPrefix="action-explore"
-                            className="text-2xl font-bold"
+                            className="text-[clamp(1.25rem,3.75vw,2rem)] font-bold"
                               animationDuration={morphingLabelSpeed.default}
                           />
                         </div>
@@ -498,7 +498,7 @@ export function Navbar() {
                   </motion.div>
 
                   <motion.div
-                    className="col-span-1 sm:col-span-4 flex flex-col gap-4 pl-0 sm:pl-12"
+                    className="col-span-1 sm:col-span-4 sm:col-start-7 flex flex-col gap-4 pl-0 sm:pl-12"
                     variants={ANIMATIONS.column}
                   >
                     <motion.div
@@ -541,11 +541,11 @@ export function Navbar() {
                               }
                             }}
                           >
-                            <div className="text-[15px] font-medium text-foreground/75 group-hover:text-foreground group-focus:text-foreground group-focus-visible:text-foreground transition-colors duration-200 flex items-center overflow-hidden h-6">
+                            <div className="text-[clamp(0.8125rem,2.5vw,1rem)] font-medium text-foreground/75 group-hover:text-foreground group-focus:text-foreground group-focus-visible:text-foreground transition-colors duration-200 flex items-center overflow-hidden h-6">
                               <MorphingLabel
                                 text={t(`menu.${itemKey}`)}
                                 layoutIdPrefix={`item-${index}`}
-                                className="text-[15px] font-medium"
+                                className="text-[clamp(0.8125rem,2.5vw,1rem)] font-medium"
                                 animationDuration={morphingLabelSpeed.default}
                               />
                             </div>

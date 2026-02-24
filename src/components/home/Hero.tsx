@@ -38,11 +38,14 @@ export function Hero() {
   const cvUrl = locale === "pt" ? ACTION_LINKS.resume.pt : ACTION_LINKS.resume.en;
 
   return (
-    <section id="home" className="relative w-full h-[100dvh] flex flex-col justify-center overflow-hidden bg-background">
+    <section
+      id="home"
+      className="relative w-full min-h-dvh flex flex-col justify-center overflow-hidden bg-background pt-[calc(clamp(5rem,calc(4.5rem+2.5vw),6.5rem)+env(safe-area-inset-top))] pb-[calc(clamp(7rem,calc(6rem+4.2vw),9.5rem)+env(safe-area-inset-bottom))]"
+    >
 
       <div className="absolute inset-0 flex items-center justify-center overflow-hidden pointer-events-none select-none">
         <div className="absolute inset-0 bg-radial-gradient from-transparent via-transparent to-background/40" />
-        <div className="absolute bottom-0 left-0 right-0 h-32 sm:h-40 bg-gradient-to-t from-background to-transparent z-10" />
+        <div className="absolute bottom-0 left-0 right-0 h-[clamp(8rem,20vw,10rem)] bg-gradient-to-t from-background to-transparent z-10" />
       </div>
 
       <Container className="relative z-20 flex flex-col items-center text-center px-4 sm:px-6">
@@ -50,19 +53,19 @@ export function Hero() {
           initial="hidden"
           animate="visible"
           transition={{ staggerChildren: 0.2 }}
-          className="max-w-5xl space-y-6 sm:space-y-8"
+          className="max-w-5xl space-y-[clamp(1.5rem,4vw,2rem)]"
         >
-          <div className="flex flex-col items-center justify-center -space-y-1 sm:-space-y-2 md:-space-y-4">
+          <div className="flex flex-col items-center justify-center -space-y-1 sm:-space-y-2">
             <motion.h1
               variants={textVariants}
-              className="text-5xl sm:text-6xl md:text-8xl lg:text-[9rem] font-bold tracking-tighter text-foreground leading-none"
+              className="text-[clamp(2.5rem,calc(0.333rem+10.833vw),9rem)] font-bold tracking-tighter text-foreground leading-none"
             >
               {t('name')}
             </motion.h1>
 
             <motion.span
               variants={textVariants}
-              className="text-3xl sm:text-4xl md:text-6xl lg:text-8xl font-bold tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-foreground/80 to-foreground/40 leading-tight pb-2"
+              className="text-[clamp(1.5rem,7.5vw,6rem)] font-bold tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-foreground/80 to-foreground/40 leading-tight pb-2"
             >
               {t('role')}
             </motion.span>
@@ -70,20 +73,20 @@ export function Hero() {
 
           <motion.p
             variants={textVariants}
-            className="mx-auto max-w-2xl text-base sm:text-lg md:text-2xl leading-relaxed text-foreground/60 font-medium pt-2 sm:pt-4 px-4 sm:px-0"
+            className="mx-auto max-w-2xl text-[clamp(1rem,calc(0.75rem+0.9375vw),1.5rem)] leading-relaxed text-foreground/60 font-medium pt-[clamp(0.5rem,1.5vw,1rem)] px-4 sm:px-0"
           >
             {t('description')}
           </motion.p>
 
           <motion.div
             variants={textVariants}
-            className="flex flex-col md:flex-row items-center justify-center gap-4 sm:gap-6 pt-8 sm:pt-12 px-4 sm:px-0"
+            className="flex flex-col sm:flex-row items-center justify-center gap-[clamp(1rem,2.5vw,1.5rem)] pt-[clamp(1.5rem,6vw,3rem)] px-4 sm:px-0"
           >
             <PrimaryButton
               href={ACTION_LINKS.portfolio}
               showArrow
               ariaLabel={t('portfolio')}
-              className="px-8 sm:px-10 py-3 sm:py-4 text-base sm:text-lg min-w-[160px] md:min-w-[200px] w-full md:w-auto"
+              className="px-[clamp(2rem,4vw,2.5rem)] py-[clamp(0.75rem,1.5vw,1rem)] text-[clamp(1rem,calc(0.875rem+0.3125vw),1.125rem)] w-full sm:w-auto sm:min-w-[200px] max-w-[280px]"
             >
               <Briefcase size={20} className="mb-0.5" />
               {t('portfolio')}
@@ -93,7 +96,7 @@ export function Hero() {
               href={cvUrl}
               download
               ariaLabel={t('cv')}
-              className="px-8 sm:px-10 py-3 sm:py-4 text-base sm:text-lg min-w-[160px] md:min-w-[200px] w-full md:w-auto"
+              className="px-[clamp(2rem,4vw,2.5rem)] py-[clamp(0.75rem,1.5vw,1rem)] text-[clamp(1rem,calc(0.875rem+0.3125vw),1.125rem)] w-full sm:w-auto sm:min-w-[200px] max-w-[280px]"
             >
               <FileText size={20} className="mb-0.5" />
               {t('cv')}
@@ -106,16 +109,16 @@ export function Hero() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 1.0, duration: 0.8, ease: "easeOut" }}
-        className="absolute bottom-8 sm:bottom-12 left-0 right-0 flex justify-center gap-4 sm:gap-6 z-30"
+        className="absolute bottom-[clamp(2rem,5vw,3rem)] left-0 right-0 flex justify-center gap-[clamp(1rem,2vw,1.5rem)] z-30"
       >
         <SocialLink
           href={SOCIAL_LINKS.linkedin}
-          icon={<Linkedin size={24} strokeWidth={1.5} className="sm:w-7 sm:h-7" />}
+          icon={<Linkedin size={24} strokeWidth={1.5} className="w-[clamp(1.5rem,3.5vw,1.75rem)] h-[clamp(1.5rem,3.5vw,1.75rem)]" />}
           label={t('linkedin_label')}
         />
         <SocialLink
           href={SOCIAL_LINKS.github}
-          icon={<Github size={24} strokeWidth={1.5} className="sm:w-7 sm:h-7" />}
+          icon={<Github size={24} strokeWidth={1.5} className="w-[clamp(1.5rem,3.5vw,1.75rem)] h-[clamp(1.5rem,3.5vw,1.75rem)]" />}
           label={t('github_label')}
         />
       </motion.div>

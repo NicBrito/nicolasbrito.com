@@ -73,7 +73,7 @@ export interface ProjectCardProps {
 export function ProjectCard({
   id,
   image,
-  colSpan = "md:col-span-4",
+  colSpan = "xl:col-span-4",
   colors,
   className,
   priority = false,
@@ -103,7 +103,7 @@ export function ProjectCard({
         href={`/projects/${id}`}
         target="_self"
         rel={undefined}
-        className="w-full sm:w-auto sm:min-w-40 rounded-full px-6 py-3 text-sm font-medium justify-center"
+        className="rounded-full px-6 py-3 text-sm font-medium"
       >
         {t("view_case")}
       </PrimaryButton>
@@ -112,7 +112,7 @@ export function ProjectCard({
         href={`/projects/${id}/demo`}
         target="_self"
         rel={undefined}
-        className="w-full sm:w-auto sm:min-w-40 rounded-full px-6 py-3 text-sm font-medium justify-center"
+        className="rounded-full px-6 py-3 text-sm font-medium"
       >
         {t("visit_site")}
       </SecondaryButton>
@@ -125,7 +125,8 @@ export function ProjectCard({
       whileHover="hover"
       onHoverStart={onHover}
       className={cn(
-        "group relative flex flex-col justify-end overflow-hidden rounded-4xl sm:rounded-[40px]",
+        "project-card group relative flex flex-col justify-end overflow-hidden rounded-4xl sm:rounded-[40px]",
+        "xl:min-w-[22rem]",
         "border border-black/5 dark:border-white/5",
         "bg-[#f5f5f7] dark:bg-[#101010]",
         "shadow-sm hover:shadow-2xl transition-shadow duration-450",
@@ -232,7 +233,7 @@ export function ProjectCard({
         )}
       </div>
 
-      <div className="relative z-30 flex flex-col gap-3.5 p-7 sm:p-10 transform transition-transform duration-500 translate-y-1.5 group-hover:translate-y-0 group-focus-within:translate-y-0">
+      <div className="project-card-content relative z-30 flex flex-col gap-3.5 p-7 sm:p-10 transform transition-transform duration-500">
         <div>
           <h3 className="mb-2 text-2xl sm:text-3xl font-bold text-white tracking-tight drop-shadow-lg">
             {t(`items.${id}.title`)}
@@ -242,7 +243,7 @@ export function ProjectCard({
           </p>
         </div>
 
-        <div className="mt-2 flex w-full flex-col gap-2.5 sm:flex-row sm:items-center transition-all duration-300 opacity-100 translate-y-0 pointer-events-auto sm:opacity-0 sm:translate-y-4 sm:pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto group-focus-within:opacity-100 group-focus-within:translate-y-0 group-focus-within:pointer-events-auto">
+        <div className="project-card-actions mt-2 flex flex-row flex-wrap items-center gap-2.5 transition-all duration-300 opacity-100 translate-y-0 pointer-events-auto">
           {actions || defaultActions}
         </div>
       </div>

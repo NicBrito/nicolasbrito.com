@@ -9,7 +9,7 @@ const PROJECTS = [
   {
     id: "project-1",
     image: "",
-    colSpan: "md:col-span-6",
+    colSpan: "xl:col-span-6",
     colors: {
       from: "bg-blue-600 dark:bg-blue-500",
       to: "bg-purple-600 dark:bg-purple-500",
@@ -18,7 +18,7 @@ const PROJECTS = [
   {
     id: "project-2",
     image: "",
-    colSpan: "md:col-span-4",
+    colSpan: "xl:col-span-4",
     colors: {
       from: "bg-indigo-600 dark:bg-indigo-500",
       to: "bg-cyan-600 dark:bg-cyan-500",
@@ -27,7 +27,7 @@ const PROJECTS = [
   {
     id: "project-3",
     image: "",
-    colSpan: "md:col-span-2",
+    colSpan: "xl:col-span-2",
     colors: {
       from: "bg-emerald-600 dark:bg-emerald-500",
       to: "bg-teal-600 dark:bg-teal-500",
@@ -36,7 +36,7 @@ const PROJECTS = [
   {
     id: "project-4",
     image: "",
-    colSpan: "md:col-span-3",
+    colSpan: "xl:col-span-3",
     colors: {
       from: "bg-orange-600 dark:bg-orange-500",
       to: "bg-red-600 dark:bg-red-500",
@@ -45,7 +45,7 @@ const PROJECTS = [
   {
     id: "project-5",
     image: "",
-    colSpan: "md:col-span-3",
+    colSpan: "xl:col-span-3",
     colors: {
       from: "bg-pink-600 dark:bg-pink-500",
       to: "bg-rose-600 dark:bg-rose-500",
@@ -133,9 +133,9 @@ export function ProjectsSection() {
     <section
       id="projects"
       aria-labelledby="projects-section-title"
-      className="relative w-full overflow-hidden bg-background py-20 md:py-32"
+      className="relative w-full overflow-hidden bg-background py-16 sm:py-20 md:py-28 lg:py-32"
     >
-      <div className="relative z-10 mx-auto w-full max-w-7xl px-4 sm:px-6">
+      <div className="relative z-10 mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
         <motion.div
           initial="hidden"
           whileInView="visible"
@@ -157,7 +157,7 @@ export function ProjectsSection() {
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, margin: "-30px" }}
-          className="grid grid-cols-1 gap-5 auto-rows-[500px] sm:gap-6 sm:auto-rows-[540px] md:grid-cols-6"
+          className="grid grid-cols-1 gap-5 auto-rows-[clamp(24rem,66vh,34rem)] sm:gap-6 sm:auto-rows-[clamp(25rem,62vh,35rem)] xl:grid-cols-6 xl:auto-rows-[clamp(24rem,56vh,34rem)]"
         >
           {PROJECTS.map((project, index) => (
             <ProjectCard

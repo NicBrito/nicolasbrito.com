@@ -25,6 +25,11 @@
     "actions": {
       "explore_all_projects": "Explore All Projects",
       "explore_all_games": "Explore All Games"
+    },
+    "hamburger": {
+      "open": "Open menu",
+      "close": "Close menu",
+      "back": "Go back"
     }
   },
   "Hero": {

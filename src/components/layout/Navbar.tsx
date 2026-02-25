@@ -1,5 +1,6 @@
 "use client";
 
+import { HamburgerMenu } from "@/components/layout/HamburgerMenu";
 import { Container } from "@/components/ui/Container";
 import { MorphingLabel } from "@/components/ui/MorphingLabel";
 import { morphingLabelSpeed } from "@/lib/animations";
@@ -364,7 +365,7 @@ export function Navbar() {
           }}
         >
           <Container className="flex items-end justify-center h-auto pt-6 pb-1">
-            <ul className="flex items-center gap-[clamp(1.5rem,4vw,3rem)] flex-wrap justify-center">
+            <ul className="touch-desktop-nav items-center gap-[clamp(1.5rem,4vw,3rem)] flex-wrap justify-center">
               {NAV_ITEMS.map((item, index) => (
                 <li key={item.key} className="relative">
                   <Link
@@ -399,6 +400,7 @@ export function Navbar() {
                 </li>
               ))}
             </ul>
+            <HamburgerMenu />
           </Container>
         </motion.div>
 

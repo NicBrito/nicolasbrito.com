@@ -29,7 +29,7 @@ Positioned in `src/components/ui/` as design system primitive, alongside `Primar
   - Two animated orbs with intense blur (140px/120px)
   - Customizable colors via `colors.from` and `colors.to`
   - Fade-in animation with staggered delays
-  - Reduced opacity (20% light / 15% dark)
+  - Reduced opacity (15%)
 
 - **Image Background (with image):**
   - Next.js Image with lazy loading
@@ -41,7 +41,7 @@ Positioned in `src/components/ui/` as design system primitive, alongside `Primar
 #### Content Styling
 - **Title:** `text-3xl font-bold text-white` with drop-shadow
 - **Description:** `text-lg text-white/90` with line-clamp-2
-- **Border:** Subtle (`border-black/5 dark:border-white/5`)
+- **Border:** Subtle (`border-white/5`)
 - **Border Radius:** Rounded-[40px] (Apple-style)
 - **Shadow:** `shadow-sm hover:shadow-2xl` transition
 
@@ -175,8 +175,8 @@ export interface ProjectCardProps {
   id="project-1"
   colSpan="md:col-span-6"
   colors={{
-    from: "bg-blue-600 dark:bg-blue-500",
-    to: "bg-purple-600 dark:bg-purple-500",
+    from: "bg-blue-500",
+    to: "bg-purple-500",
   }}
 />
 ```
@@ -392,19 +392,19 @@ npm run test
 
 ```typescript
 // Blue & Purple (Tech, SaaS)
-{ from: "bg-blue-600 dark:bg-blue-500", to: "bg-purple-600 dark:bg-purple-500" }
+{ from: "bg-blue-500", to: "bg-purple-500" }
 
 // Indigo & Cyan (Data, Analytics)
-{ from: "bg-indigo-600 dark:bg-indigo-500", to: "bg-cyan-600 dark:bg-cyan-500" }
+{ from: "bg-indigo-500", to: "bg-cyan-500" }
 
 // Emerald & Teal (Nature, Health)
-{ from: "bg-emerald-600 dark:bg-emerald-500", to: "bg-teal-600 dark:bg-teal-500" }
+{ from: "bg-emerald-500", to: "bg-teal-500" }
 
 // Orange & Red (Energy, Action)
-{ from: "bg-orange-600 dark:bg-orange-500", to: "bg-red-600 dark:bg-red-500" }
+{ from: "bg-orange-500", to: "bg-red-500" }
 
 // Pink & Rose (Creative, Design)
-{ from: "bg-pink-600 dark:bg-pink-500", to: "bg-rose-600 dark:bg-rose-500" }
+{ from: "bg-pink-500", to: "bg-rose-500" }
 ```
 
 ### Grid Layout Patterns

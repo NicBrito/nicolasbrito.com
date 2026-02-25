@@ -127,8 +127,8 @@ export function ProjectCard({
       className={cn(
         "project-card group relative flex flex-col justify-end overflow-hidden rounded-4xl sm:rounded-[40px]",
         "xl:min-w-[22rem]",
-        "border border-black/5 dark:border-white/5",
-        "bg-[#f5f5f7] dark:bg-[#101010]",
+        "border border-white/5",
+        "bg-[#101010]",
         "shadow-sm hover:shadow-2xl transition-shadow duration-450",
         colSpan,
         className
@@ -152,7 +152,7 @@ export function ProjectCard({
               >
                 <div
                   className={cn(
-                    "absolute -top-[10%] -left-[10%] w-[70%] h-[70%] rounded-full blur-[140px] opacity-20 dark:opacity-15",
+                    "absolute -top-[10%] -left-[10%] w-[70%] h-[70%] rounded-full blur-[140px] opacity-15",
                     "transform-gpu will-change-transform",
                     colors.from
                   )}
@@ -166,7 +166,7 @@ export function ProjectCard({
               >
                 <div
                   className={cn(
-                    "absolute bottom-0 -right-[10%] w-[60%] h-[60%] rounded-full blur-[120px] opacity-20 dark:opacity-15",
+                    "absolute bottom-0 -right-[10%] w-[60%] h-[60%] rounded-full blur-[120px] opacity-15",
                     "transform-gpu will-change-transform",
                     colors.to
                   )}
@@ -179,7 +179,7 @@ export function ProjectCard({
                 transition={{ delay: 0.5, duration: 1 }}
                 className="absolute inset-0 flex items-center justify-center pointer-events-none"
               >
-                <div className="opacity-[0.03] dark:opacity-[0.05] scale-[0.8] transform group-hover:scale-[0.85] transition-transform duration-1000">
+                <div className="opacity-[0.05] scale-[0.8] transform group-hover:scale-[0.85] transition-transform duration-1000">
                   <ImageIcon size={200} strokeWidth={0.5} />
                 </div>
               </motion.div>

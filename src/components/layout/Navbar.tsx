@@ -433,7 +433,7 @@ export function Navbar() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0, transition: { duration: 0.2 } }}
-                className="absolute bottom-0 left-0 w-full h-px bg-black/5 dark:bg-white/5 z-50"
+                className="absolute bottom-0 left-0 w-full h-px bg-white/5 z-50"
               />
 
               <Container className="py-[clamp(2rem,5vw,3.5rem)]">

@@ -40,7 +40,7 @@ src/
     * Footer includes action buttons (Portfolio/CV) and social links.
 * **Projects Section (Bento Grid):**
     * Responsive grid layout inspired by Apple product cards.
-    * Cards feature subtle backgrounds (`#fbfbfd` in light mode), hierarchical typography, and elegant visual placeholders.
+    * Cards feature subtle backgrounds (`#101010`), hierarchical typography, and elegant visual placeholders.
 * **ScrollProgress (Lateral Navigation):**
     * Visual "thread" on the left side indicating reading progress.
     * **Advanced Logic:** Segmented lines allow transparency between points without visual bugs.

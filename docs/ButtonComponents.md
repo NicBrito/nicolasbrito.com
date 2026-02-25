@@ -384,7 +384,6 @@ All buttons use:
 - Tailwind v4 CSS Variables (`@theme`)
 - Accent class for primary color
 - Opacity utilities (`bg-white/5`, `text-foreground/80`)
-- Automatic dark mode (`dark:`)
 
 ## 7. Testing Coverage
 

@@ -11,8 +11,8 @@ const PROJECTS = [
     image: "",
     colSpan: "xl:col-span-6",
     colors: {
-      from: "bg-blue-600 dark:bg-blue-500",
-      to: "bg-purple-600 dark:bg-purple-500",
+      from: "bg-blue-500",
+      to: "bg-purple-500",
     },
   },
   {
@@ -20,8 +20,8 @@ const PROJECTS = [
     image: "",
     colSpan: "xl:col-span-4",
     colors: {
-      from: "bg-indigo-600 dark:bg-indigo-500",
-      to: "bg-cyan-600 dark:bg-cyan-500",
+      from: "bg-indigo-500",
+      to: "bg-cyan-500",
     },
   },
   {
@@ -29,8 +29,8 @@ const PROJECTS = [
     image: "",
     colSpan: "xl:col-span-2",
     colors: {
-      from: "bg-emerald-600 dark:bg-emerald-500",
-      to: "bg-teal-600 dark:bg-teal-500",
+      from: "bg-emerald-500",
+      to: "bg-teal-500",
     },
   },
   {
@@ -38,8 +38,8 @@ const PROJECTS = [
     image: "",
     colSpan: "xl:col-span-3",
     colors: {
-      from: "bg-orange-600 dark:bg-orange-500",
-      to: "bg-red-600 dark:bg-red-500",
+      from: "bg-orange-500",
+      to: "bg-red-500",
     },
   },
   {
@@ -47,8 +47,8 @@ const PROJECTS = [
     image: "",
     colSpan: "xl:col-span-3",
     colors: {
-      from: "bg-pink-600 dark:bg-pink-500",
-      to: "bg-rose-600 dark:bg-rose-500",
+      from: "bg-pink-500",
+      to: "bg-rose-500",
     },
   },
 ];

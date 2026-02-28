@@ -29,7 +29,8 @@
     "hamburger": {
       "open": "Abrir menu",
       "close": "Fechar menu",
-      "back": "Voltar"
+      "back": "Voltar",
+      "main_menu": "Menu principal"
     }
   },
   "Hero": {

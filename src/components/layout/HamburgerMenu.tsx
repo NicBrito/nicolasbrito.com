@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 type MenuKey = "projects" | "games";
+type TransitionDirection = "forward" | "backward" | "overlay";
 
 type NavItem = {
   key: string;
@@ -34,7 +35,7 @@ const SUBMENU_CONFIG = {
 } as const;
 
 const HAMBURGER_ICON_TRANSITION = {
-  duration: 0.3,
+  duration: 0.26,
   ease: [0.2, 0, 0.2, 1] as [number, number, number, number],
 };
 
@@ -42,141 +43,66 @@ const menuOverlay: Variants = {
   closed: {
     height: 0,
     transition: {
-      duration: 0.62,
-      ease: [0.4, 0.0, 0.2, 1],
-      when: "afterChildren",
+      duration: 0.36,
+      ease: [0.42, 0, 0.58, 1],
     },
   },
   open: {
     height: "100dvh",
     transition: {
-      duration: 0.48,
-      ease: [0.2, 0, 0.2, 1],
-      when: "beforeChildren",
-    },
-  },
-};
-
-const menuContent: Variants = {
-  closed: {
-    opacity: 0,
-    y: -6,
-    filter: "blur(8px)",
-    transition: {
-      duration: 0.24,
-      ease: [0.4, 0.0, 0.2, 1],
-    },
-  },
-  open: {
-    opacity: 1,
-    y: 0,
-    filter: "blur(0px)",
-    transition: {
-      duration: 0.32,
-      delay: 0.08,
-      ease: [0.2, 0.65, 0.3, 0.9],
+      duration: 0.38,
+      ease: [0.32, 0.72, 0, 1],
     },
   },
 };
 
 const itemCascade: Variants = {
-  closed: {
+  closed: (direction: TransitionDirection = "overlay") => ({
     opacity: 0,
-    y: -10,
-    filter: "blur(12px)",
+    x: direction === "forward" ? 16 : direction === "backward" ? -16 : 0,
+    y: direction === "overlay" ? -18 : 0,
+    filter: "blur(4px)",
     transition: {
-      duration: 0.2,
-      ease: [0.4, 0.0, 0.2, 1],
+      duration: 0.18,
+      ease: [0.42, 0, 1, 1],
     },
-  },
+  }),
   open: {
     opacity: 1,
+    x: 0,
     y: 0,
     filter: "blur(0px)",
     transition: {
-      duration: 0.28,
-      ease: [0.2, 0.65, 0.3, 0.9],
+      duration: 0.32,
+      ease: [0, 0, 0.58, 1],
     },
   },
+  exit: (direction: TransitionDirection = "overlay") => ({
+    opacity: 0,
+    x: direction === "forward" ? -16 : direction === "backward" ? 16 : 0,
+    filter: "blur(4px)",
+    transition: {
+      duration: 0.22,
+      ease: [0.42, 0, 1, 1],
+    },
+  }),
 };
 
 const staggerContainer: Variants = {
+  open: (direction: TransitionDirection = "overlay") => ({
+    transition: {
+      staggerChildren: 0,
+      ...(direction === "overlay" && { delayChildren: 0.06 }),
+    },
+  }),
   closed: {
     transition: {
-      staggerChildren: 0.03,
-      staggerDirection: -1,
-    },
-  },
-  open: {
-    transition: {
-      staggerChildren: 0.055,
-    },
-  },
-};
-
-const submenuSlideForward: Variants = {
-  initial: {
-    x: 34,
-    opacity: 0,
-    filter: "blur(10px)",
-  },
-  animate: {
-    x: 0,
-    opacity: 1,
-    filter: "blur(0px)",
-    transition: {
-      duration: 0.26,
-      ease: [0.2, 0.65, 0.3, 0.9],
-    },
-  },
-  exit: {
-    x: -28,
-    opacity: 0,
-    filter: "blur(8px)",
-    transition: {
-      duration: 0.2,
-      ease: [0.4, 0.0, 0.2, 1],
-    },
-  },
-};
-
-const submenuSlideBackward: Variants = {
-  initial: {
-    x: -34,
-    opacity: 0,
-    filter: "blur(10px)",
-  },
-  animate: {
-    x: 0,
-    opacity: 1,
-    filter: "blur(0px)",
-    transition: {
-      duration: 0.26,
-      ease: [0.2, 0.65, 0.3, 0.9],
-    },
-  },
-  exit: {
-    x: 28,
-    opacity: 0,
-    filter: "blur(8px)",
-    transition: {
-      duration: 0.2,
-      ease: [0.4, 0.0, 0.2, 1],
-    },
-  },
-};
-
-const submenuStagger: Variants = {
-  initial: {},
-  animate: {
-    transition: {
-      staggerChildren: 0.04,
+      staggerChildren: 0,
     },
   },
   exit: {
     transition: {
-      staggerChildren: 0.025,
-      staggerDirection: -1,
+      staggerChildren: 0,
     },
   },
 };
@@ -184,13 +110,18 @@ const submenuStagger: Variants = {
 export function HamburgerMenu() {
   const t = useTranslations("Navbar");
   const [isOpen, setIsOpen] = useState(false);
+  const [isClosing, setIsClosing] = useState(false);
   const [activeSubmenu, setActiveSubmenu] = useState<MenuKey | null>(null);
-  const [direction, setDirection] = useState<"forward" | "backward">("forward");
-  const menuRef = useRef<HTMLDivElement>(null);
+  const [direction, setDirection] = useState<TransitionDirection>("overlay");
+  const closeTimeout = useRef<NodeJS.Timeout | null>(null);
 
   const closeMenu = useCallback(() => {
-    setActiveSubmenu(null);
-    setIsOpen(false);
+    setDirection("overlay");
+    setIsClosing(true);
+    closeTimeout.current = setTimeout(() => {
+      setIsOpen(false);
+      setIsClosing(false);
+    }, 180);
   }, []);
 
   const openSubmenu = useCallback((key: MenuKey) => {
@@ -215,6 +146,12 @@ export function HamburgerMenu() {
   }, [isOpen]);
 
   useEffect(() => {
+    return () => {
+      if (closeTimeout.current) clearTimeout(closeTimeout.current);
+    };
+  }, []);
+
+  useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape" && isOpen) {
         if (activeSubmenu) {
@@ -228,7 +165,6 @@ export function HamburgerMenu() {
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, activeSubmenu, goBack, closeMenu]);
 
-  const slideVariants = direction === "forward" ? submenuSlideForward : submenuSlideBackward;
   const currentSubmenu = activeSubmenu ? SUBMENU_CONFIG[activeSubmenu] : null;
   const handleTriggerClick = useCallback(() => {
     if (isOpen) {
@@ -236,7 +172,7 @@ export function HamburgerMenu() {
       return;
     }
 
-    setDirection("forward");
+    setDirection("overlay");
     setActiveSubmenu(null);
     setIsOpen(true);
   }, [isOpen, closeMenu]);
@@ -277,21 +213,22 @@ export function HamburgerMenu() {
         </div>
       </button>
 
-      <AnimatePresence>
+      <AnimatePresence
+        onExitComplete={() => {
+          setActiveSubmenu(null);
+          setDirection("overlay");
+        }}
+      >
         {isOpen && (
           <motion.div
-            ref={menuRef}
             variants={menuOverlay}
             initial="closed"
             animate="open"
             exit="closed"
             className="fixed inset-x-0 top-0 z-50 bg-background overflow-hidden"
-            style={{ willChange: "height" }}
+            style={{ willChange: "height", transform: "translateZ(0)" }}
           >
-            <motion.div
-              className="mx-auto max-w-[980px] lg:max-w-[1200px]"
-              variants={menuContent}
-            >
+            <div className="mx-auto max-w-245 lg:max-w-300">
               <div className="flex items-end justify-between px-4 md:px-6 pt-6 pb-1 z-10">
                 <AnimatePresence mode="wait" initial={false}>
                   {activeSubmenu ? (
@@ -299,16 +236,47 @@ export function HamburgerMenu() {
                       key="back-button"
                       type="button"
                       aria-label={t("hamburger.back")}
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -10 }}
-                      transition={{ duration: 0.22, ease: [0.2, 0.65, 0.3, 0.9] }}
+                      initial={{ opacity: 0, x: 16, y: 0 }}
+                      animate={
+                        isClosing
+                          ? {
+                              opacity: 0,
+                              x: 0,
+                              y: -18,
+                              transition: {
+                                duration: 0.18,
+                                ease: [0.42, 0, 1, 1],
+                              },
+                            }
+                          : {
+                              opacity: 1,
+                              x: 0,
+                              y: 0,
+                              transition: {
+                                duration: 0.25,
+                                ease: [0, 0, 0.58, 1],
+                              },
+                            }
+                      }
+                      exit={
+                        isClosing
+                          ? { opacity: 0 }
+                          : {
+                              opacity: 0,
+                              x: 16,
+                              y: 0,
+                              transition: {
+                                duration: 0.22,
+                                ease: [0.42, 0, 1, 1],
+                              },
+                            }
+                      }
                       className="flex items-center justify-center size-10 -ml-2 rounded-full outline-none focus-visible:bg-white/20 transition-colors duration-200 text-foreground/80 hover:text-foreground"
                       onClick={goBack}
                     >
                       <svg
-                        width="26"
-                        height="26"
+                        width="22"
+                        height="22"
                         viewBox="0 0 18 18"
                         fill="none"
                         className="touch-back-icon stroke-current"
@@ -333,25 +301,29 @@ export function HamburgerMenu() {
               </div>
 
               <div
-                className="relative px-4 md:px-6 pt-6 overflow-y-auto"
+                className="relative px-4 md:px-6 pt-[clamp(0.75rem,2.5vw,1.25rem)] overflow-y-auto"
                 style={{
                   height: "calc(100dvh - 4rem)",
                   paddingBottom: "max(1rem, env(safe-area-inset-bottom))",
                 }}
               >
-                <AnimatePresence mode="wait" initial={false}>
+                <AnimatePresence mode="sync">
                   {!activeSubmenu ? (
                     <motion.nav
                       key="main-menu"
-                      variants={staggerContainer}
-                      initial="closed"
-                      animate="open"
-                      exit="closed"
-                      aria-label="Main menu"
+                      aria-label={t("hamburger.main_menu")}
+                      className="absolute inset-x-0 top-0"
                     >
-                      <ul className="touch-menu-list flex flex-col gap-y-2 pl-6 sm:pl-8">
+                      <motion.ul
+                        variants={staggerContainer}
+                        initial="closed"
+                        animate={isClosing ? "closed" : "open"}
+                        exit="exit"
+                        custom={direction}
+                        className="touch-menu-list flex flex-col pl-[clamp(3rem,9vw,4.5rem)]"
+                      >
                         {NAV_ITEMS.map((item) => (
-                          <motion.li key={item.key} variants={itemCascade}>
+                          <motion.li key={item.key} variants={itemCascade} custom={direction}>
                             {item.hasSubmenu ? (
                               <button
                                 type="button"
@@ -359,7 +331,7 @@ export function HamburgerMenu() {
                                 className="inline outline-none"
                               >
                                 <span
-                                  className="touch-hamburger-text text-[clamp(1.4375rem,6.2vw,1.95rem)] font-bold text-foreground tracking-tight leading-relaxed hover:opacity-70 transition-opacity cursor-pointer"
+                                  className="touch-hamburger-text font-bold text-foreground tracking-tight leading-relaxed hover:opacity-70 transition-opacity cursor-pointer"
                                   style={{ textRendering: "geometricPrecision" }}
                                 >
                                   {t(item.key)}
@@ -372,7 +344,7 @@ export function HamburgerMenu() {
                                 className="inline outline-none"
                               >
                                 <span
-                                  className="touch-hamburger-text text-[clamp(1.4375rem,6.2vw,1.95rem)] font-bold text-foreground tracking-tight leading-relaxed hover:opacity-70 transition-opacity"
+                                  className="touch-hamburger-text font-bold text-foreground tracking-tight leading-relaxed hover:opacity-70 transition-opacity"
                                   style={{ textRendering: "geometricPrecision" }}
                                 >
                                   {t(item.key)}
@@ -381,26 +353,30 @@ export function HamburgerMenu() {
                             )}
                           </motion.li>
                         ))}
-                      </ul>
+                      </motion.ul>
                     </motion.nav>
                   ) : (
                     <motion.nav
                       key={`submenu-${activeSubmenu}`}
-                      variants={submenuStagger}
-                      initial="initial"
-                      animate="animate"
-                      exit="exit"
                       aria-label={t(activeSubmenu)}
+                      className="absolute inset-x-0 top-0"
                     >
-                      <ul className="touch-menu-list flex flex-col gap-y-2 pl-6 sm:pl-8">
-                        <motion.li variants={slideVariants}>
+                      <motion.ul
+                        variants={staggerContainer}
+                        initial="closed"
+                        animate={isClosing ? "closed" : "open"}
+                        exit="exit"
+                        custom={direction}
+                        className="touch-menu-list flex flex-col pl-[clamp(3rem,9vw,4.5rem)]"
+                      >
+                        <motion.li variants={itemCascade} custom={direction}>
                           <Link
                             href={currentSubmenu!.href}
                             onClick={closeMenu}
                             className="inline outline-none"
                           >
                             <span
-                              className="touch-hamburger-text text-[clamp(1.4375rem,6.2vw,1.95rem)] font-bold text-foreground tracking-tight leading-relaxed hover:opacity-70 transition-opacity"
+                              className="touch-hamburger-text font-bold text-foreground tracking-tight leading-relaxed hover:opacity-70 transition-opacity"
                               style={{ textRendering: "geometricPrecision" }}
                             >
                               {t(currentSubmenu!.exploreKey)}
@@ -409,14 +385,14 @@ export function HamburgerMenu() {
                         </motion.li>
 
                         {currentSubmenu!.items.map((itemKey) => (
-                          <motion.li key={itemKey} variants={slideVariants}>
+                          <motion.li key={itemKey} variants={itemCascade} custom={direction}>
                             <Link
                               href={currentSubmenu!.href}
                               onClick={closeMenu}
                               className="inline outline-none"
                             >
                               <span
-                                className="touch-hamburger-text text-[clamp(1.4375rem,6.2vw,1.95rem)] font-bold text-foreground tracking-tight leading-relaxed hover:opacity-70 transition-opacity"
+                                className="touch-hamburger-text font-bold text-foreground tracking-tight leading-relaxed hover:opacity-70 transition-opacity"
                                 style={{ textRendering: "geometricPrecision" }}
                               >
                                 {t(`menu.${itemKey}`)}
@@ -424,12 +400,12 @@ export function HamburgerMenu() {
                             </Link>
                           </motion.li>
                         ))}
-                      </ul>
+                      </motion.ul>
                     </motion.nav>
                   )}
                 </AnimatePresence>
               </div>
-            </motion.div>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

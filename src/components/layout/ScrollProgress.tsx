@@ -34,6 +34,7 @@ const BOUNCE_EASE: [number, number, number, number] = [0.34, 1.56, 0.64, 1];
 const ENTER_DURATION = 0.3;
 const EXIT_DURATION = 0.35;
 const BOUNCE_DURATION = 0.4;
+const POINTER_MEDIA_QUERY = "(any-pointer: fine)";
 
 const CONTAINER_CLASS = "fixed right-6 top-0 -translate-y-1/2 z-50 pointer-events-none will-change-transform";
 const LABEL_CLASS = "text-sm md:text-base lg:text-lg font-black tracking-wide text-foreground/80 uppercase select-none whitespace-nowrap";
@@ -46,12 +47,38 @@ export function ScrollProgress() {
   const [activeSection, setActiveSection] = useState<SectionId>(DEFAULT_SECTION_ID);
   const [contentHeight, setContentHeight] = useState(0);
   const [windowHeight, setWindowHeight] = useState(0);
+  const [hasPointerDevice, setHasPointerDevice] = useState(false);
   const [isScrolling, setIsScrolling] = useState(false);
   const [isBouncing, setIsBouncing] = useState(false);
   const scrollTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const bounceTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { scrollY } = useScroll();
   const hasScrollbar = contentHeight > windowHeight;
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia(POINTER_MEDIA_QUERY);
+    const syncPointerDevice = () => {
+      setHasPointerDevice((previous) => (
+        previous === mediaQuery.matches ? previous : mediaQuery.matches
+      ));
+    };
+
+    syncPointerDevice();
+
+    if (typeof mediaQuery.addEventListener === "function") {
+      mediaQuery.addEventListener("change", syncPointerDevice);
+    } else {
+      mediaQuery.addListener(syncPointerDevice);
+    }
+
+    return () => {
+      if (typeof mediaQuery.removeEventListener === "function") {
+        mediaQuery.removeEventListener("change", syncPointerDevice);
+      } else {
+        mediaQuery.removeListener(syncPointerDevice);
+      }
+    };
+  }, []);
 
   const scrollbarThumbHeight = windowHeight > 0 && contentHeight > 0
     ? (windowHeight / contentHeight) * windowHeight
@@ -117,14 +144,14 @@ export function ScrollProgress() {
   }, []);
 
   useEffect(() => {
-    if (!hasScrollbar) {
+    if (!hasScrollbar || !hasPointerDevice) {
       if (scrollTimeout.current) clearTimeout(scrollTimeout.current);
       if (bounceTimeout.current) clearTimeout(bounceTimeout.current);
     }
-  }, [hasScrollbar]);
+  }, [hasPointerDevice, hasScrollbar]);
 
   useMotionValueEvent(scrollY, "change", (latest) => {
-    if (!hasScrollbar) return;
+    if (!hasScrollbar || !hasPointerDevice) return;
 
     setIsScrolling((prev) => (prev ? prev : true));
 
@@ -158,7 +185,7 @@ export function ScrollProgress() {
 
   return (
     <AnimatePresence>
-      {hasScrollbar && isScrolling && (
+      {hasPointerDevice && hasScrollbar && isScrolling && (
         <motion.div
           style={{ y }}
           initial={BASE_MOTION}

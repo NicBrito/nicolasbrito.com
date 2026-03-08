@@ -45,43 +45,43 @@ const MENU_CONFIG = {
   }
 } as const;
 
+const EASING = {
+  decelerate: [0.0, 0.0, 0.2, 1],
+  softDecelerate: [0.12, 0.4, 0.2, 1],
+  accelerate: [0.4, 0.0, 1.0, 1.0],
+  standard: [0.2, 0.0, 0.0, 1.0],
+} as const;
+
+const CONTENT_ITEM_EXIT_DURATION = 0.25;
+
 const ANIMATIONS = {
   gridContainer: {
     hidden: { opacity: 1 },
     visible: {
       opacity: 1,
-      transition: {
-        delayChildren: 0.15,
-        staggerChildren: 0
-      }
+      transition: { delayChildren: 0.15, staggerChildren: 0 }
     },
     exit: {
       opacity: 1,
-      transition: {
-        when: "afterChildren"
-      }
+      transition: { when: "afterChildren" }
     }
   } as Variants,
   column: {
     hidden: { opacity: 1 },
     visible: {
       opacity: 1,
-      transition: {
-        staggerChildren: 0.04
-      }
+      transition: { staggerChildren: 0.05 }
     },
     exit: {
       opacity: 1,
-      transition: {
-        staggerChildren: 0
-      }
+      transition: { staggerChildren: 0 }
     }
   } as Variants,
   contentItem: {
     hidden: {
       opacity: 0,
-      y: 8,
-      filter: "blur(12px)"
+      y: -8,
+      filter: "blur(4px)"
     },
     visible: {
       opacity: 1,
@@ -89,16 +89,16 @@ const ANIMATIONS = {
       filter: "blur(0px)",
       transition: {
         duration: 0.4,
-        ease: [0.2, 0.65, 0.3, 0.9]
+        ease: EASING.decelerate
       }
     },
     exit: {
       opacity: 0,
-      y: 0,
-      filter: "blur(10px)",
+      y: -14,
+      filter: "blur(4px)",
       transition: {
-        duration: 0.2,
-        ease: "easeIn"
+        duration: CONTENT_ITEM_EXIT_DURATION,
+        ease: EASING.accelerate
       }
     }
   } as Variants,
@@ -115,6 +115,30 @@ export function Navbar() {
   const navItemRefs = useRef<Map<string, HTMLAnchorElement>>(new Map());
   const dropdownItemRefs = useRef<Map<string, HTMLAnchorElement>>(new Map());
   const escKeyPressedRef = useRef(false);
+  const hoverDelayRef = useRef<NodeJS.Timeout | null>(null);
+
+  const openMenu = useCallback((menuKey: MenuKey) => {
+    if (hoverDelayRef.current) {
+      clearTimeout(hoverDelayRef.current);
+      hoverDelayRef.current = null;
+    }
+
+    if (activeMenu) {
+      setActiveMenu(menuKey);
+    } else {
+      hoverDelayRef.current = setTimeout(() => {
+        setActiveMenu(menuKey);
+        hoverDelayRef.current = null;
+      }, 250);
+    }
+  }, [activeMenu]);
+
+  const cancelHoverDelay = useCallback(() => {
+    if (hoverDelayRef.current) {
+      clearTimeout(hoverDelayRef.current);
+      hoverDelayRef.current = null;
+    }
+  }, []);
 
   const setNavItemRef = useCallback((key: string, el: HTMLAnchorElement | null) => {
     if (el) {
@@ -140,6 +164,12 @@ export function Navbar() {
     } else {
       exploreItemRefs.current.delete(key);
     }
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (hoverDelayRef.current) clearTimeout(hoverDelayRef.current);
+    };
   }, []);
 
   useEffect(() => {
@@ -326,14 +356,13 @@ export function Navbar() {
 
   return (
     <>
-      <AnimatePresence>
+      <AnimatePresence mode="sync">
         {activeMenu && (
           <motion.div
             initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.5, ease: "easeInOut" }}
-            className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 pointer-events-none"
+            animate={{ opacity: 1, transition: { duration: 0.4, ease: EASING.decelerate } }}
+            exit={{ opacity: 0, transition: { delay: CONTENT_ITEM_EXIT_DURATION, duration: 0.4, ease: EASING.standard } }}
+            className="fixed inset-0 bg-black/15 backdrop-blur-lg z-40 pointer-events-none"
             style={{ willChange: "opacity" }}
             aria-hidden="true"
           />
@@ -348,6 +377,7 @@ export function Navbar() {
         transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1], delay: 0.2 }}
         className="absolute top-0 inset-x-0 z-50 w-full"
         onMouseLeave={() => {
+          cancelHoverDelay();
           if (!focusedNavItem) {
             setActiveMenu(null);
           }
@@ -360,8 +390,8 @@ export function Navbar() {
             borderBottomColor: isNavbarVisible ? "transparent" : "transparent"
           }}
           transition={{
-            duration: isNavbarVisible ? 0.2 : 0.8,
-            ease: "easeInOut"
+            duration: isNavbarVisible ? 0.2 : 0.5,
+            ease: EASING.standard
           }}
         >
           <Container className="flex items-end justify-center h-auto pt-6 pb-1">
@@ -388,8 +418,12 @@ export function Navbar() {
                         : (pathname === item.href || focusedNavItem === item.key ? "text-white" : "text-white/70 hover:text-white focus:text-white focus-visible:text-white")
                     )}
                     onMouseEnter={() => {
-                      if (item.hasDropdown) setActiveMenu(item.key as MenuKey);
-                      else setActiveMenu(null);
+                      if (item.hasDropdown) {
+                        openMenu(item.key as MenuKey);
+                      } else {
+                        cancelHoverDelay();
+                        setActiveMenu(null);
+                      }
                     }}
                     onFocus={() => handleNavItemFocus(item)}
                     onBlur={handleNavItemBlur}
@@ -404,37 +438,31 @@ export function Navbar() {
           </Container>
         </motion.div>
 
-        <AnimatePresence>
+        <AnimatePresence mode="sync">
           {activeMenu && currentMenu && (
             <motion.div
-              layoutId="dropdown-background"
-              initial={{ opacity: 1, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
+              initial={{ height: 0 }}
+              animate={{ height: "auto" }}
               exit={{
-                opacity: 1,
                 height: 0,
                 transition: {
-                  delay: 0.2,
-                  duration: 0.4,
-                  type: "spring",
-                  stiffness: 300,
-                  damping: 40,
-                  mass: 1
+                  delay: CONTENT_ITEM_EXIT_DURATION + 0.03,
+                  duration: 0.35,
+                  ease: [0.4, 0.0, 0.7, 0.2]
                 }
               }}
               transition={{
-                type: "spring",
-                stiffness: 300,
-                damping: 40,
-                mass: 1,
+                duration: 0.42,
+                ease: EASING.softDecelerate
               }}
               className="absolute top-full left-0 w-full bg-background overflow-hidden z-40"
-              style={{ transformOrigin: "top" }}
+              style={{ willChange: "height" }}
             >
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                exit={{ opacity: 0, transition: { duration: 0.2 } }}
+                exit={{ opacity: 0, transition: { duration: 0.15 } }}
+                transition={{ duration: 0.3, ease: EASING.standard }}
                 className="absolute bottom-0 left-0 w-full h-px bg-white/5 z-50"
               />
 

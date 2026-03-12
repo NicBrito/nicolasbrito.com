@@ -115,6 +115,9 @@ export function HamburgerMenu() {
   const [direction, setDirection] = useState<TransitionDirection>("overlay");
   const directionRef = useRef<TransitionDirection>("overlay");
   const closeTimeout = useRef<NodeJS.Timeout | null>(null);
+  const triggerButtonRef = useRef<HTMLButtonElement>(null);
+  const backButtonRef = useRef<HTMLButtonElement>(null);
+  const menuContentRef = useRef<HTMLDivElement>(null);
 
   const closeMenu = useCallback(() => {
     directionRef.current = "overlay";
@@ -123,6 +126,7 @@ export function HamburgerMenu() {
     closeTimeout.current = setTimeout(() => {
       setIsOpen(false);
       setIsClosing(false);
+      triggerButtonRef.current?.focus();
     }, 180);
   }, []);
 
@@ -156,18 +160,69 @@ export function HamburgerMenu() {
   }, []);
 
   useEffect(() => {
+    if (isOpen && !activeSubmenu && !isClosing) {
+      const timer = setTimeout(() => triggerButtonRef.current?.focus(), 100);
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen, activeSubmenu, isClosing]);
+
+  useEffect(() => {
+    if (activeSubmenu) {
+      const timer = setTimeout(() => backButtonRef.current?.focus(), 300);
+      return () => clearTimeout(timer);
+    }
+  }, [activeSubmenu]);
+
+  useEffect(() => {
+    if (!isOpen || isClosing) return;
+
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && isOpen) {
+      if (e.key === "Escape") {
         if (activeSubmenu) {
           goBack();
         } else {
           closeMenu();
         }
+        return;
+      }
+
+      if (e.key !== "Tab") return;
+
+      const navItems = menuContentRef.current
+        ? Array.from(
+            menuContentRef.current.querySelectorAll<HTMLElement>("a[href], button")
+          ).filter((el) => el.offsetParent !== null)
+        : [];
+
+      const focusable: HTMLElement[] = activeSubmenu
+        ? [
+            ...(backButtonRef.current ? [backButtonRef.current] : []),
+            ...navItems,
+            ...(triggerButtonRef.current ? [triggerButtonRef.current] : []),
+          ]
+        : [
+            ...(triggerButtonRef.current ? [triggerButtonRef.current] : []),
+            ...navItems,
+          ];
+
+      if (focusable.length === 0) return;
+
+      const currentIndex = focusable.indexOf(document.activeElement as HTMLElement);
+      e.preventDefault();
+
+      if (e.shiftKey) {
+        const prevIndex = currentIndex <= 0 ? focusable.length - 1 : currentIndex - 1;
+        focusable[prevIndex].focus();
+      } else {
+        const nextIndex =
+          currentIndex < 0 || currentIndex >= focusable.length - 1 ? 0 : currentIndex + 1;
+        focusable[nextIndex].focus();
       }
     };
+
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, activeSubmenu, goBack, closeMenu]);
+  }, [isOpen, isClosing, activeSubmenu, goBack, closeMenu]);
 
   const currentSubmenu = activeSubmenu ? SUBMENU_CONFIG[activeSubmenu] : null;
   const handleTriggerClick = useCallback(() => {
@@ -185,6 +240,7 @@ export function HamburgerMenu() {
   return (
     <>
       <button
+        ref={triggerButtonRef}
         type="button"
         aria-label={isOpen ? t("hamburger.close") : t("hamburger.open")}
         aria-expanded={isOpen}
@@ -231,14 +287,19 @@ export function HamburgerMenu() {
             initial="closed"
             animate="open"
             exit="closed"
+            role="dialog"
+            aria-modal="true"
+            aria-label={t("hamburger.main_menu")}
             className="fixed inset-x-0 top-0 z-50 bg-background overflow-x-hidden"
             style={{ willChange: "height", transform: "translateZ(0)" }}
           >
             <div className="mx-auto max-w-245 lg:max-w-300">
               <div className="flex items-end justify-between px-4 md:px-6 pt-6 pb-1 z-10">
                 <motion.button
+                  ref={backButtonRef}
                   type="button"
                   aria-label={t("hamburger.back")}
+                  tabIndex={activeSubmenu && !isClosing ? 0 : -1}
                   initial={false}
                   animate={
                     activeSubmenu && !isClosing
@@ -295,6 +356,7 @@ export function HamburgerMenu() {
               </div>
 
               <div
+                ref={menuContentRef}
                 className="relative px-4 md:px-6 pt-[clamp(0.75rem,2.5vw,1.25rem)] overflow-y-auto"
                 style={{
                   height: "calc(100dvh - 4rem)",
@@ -323,10 +385,10 @@ export function HamburgerMenu() {
                               <button
                                 type="button"
                                 onClick={() => openSubmenu(item.key as MenuKey)}
-                                className="inline outline-none"
+                                className="inline outline-none group"
                               >
                                 <span
-                                  className="touch-hamburger-text font-bold text-foreground tracking-tight leading-relaxed hover:opacity-70 transition-opacity cursor-pointer"
+                                  className="touch-hamburger-text font-bold text-foreground tracking-tight leading-relaxed hover:opacity-70 group-focus-visible:opacity-70 transition-opacity cursor-pointer"
                                   style={{ textRendering: "geometricPrecision" }}
                                 >
                                   {t(item.key)}
@@ -336,10 +398,10 @@ export function HamburgerMenu() {
                               <Link
                                 href={item.href}
                                 onClick={closeMenu}
-                                className="inline outline-none"
+                                className="inline outline-none group"
                               >
                                 <span
-                                  className="touch-hamburger-text font-bold text-foreground tracking-tight leading-relaxed hover:opacity-70 transition-opacity"
+                                  className="touch-hamburger-text font-bold text-foreground tracking-tight leading-relaxed hover:opacity-70 group-focus-visible:opacity-70 transition-opacity"
                                   style={{ textRendering: "geometricPrecision" }}
                                 >
                                   {t(item.key)}
@@ -369,10 +431,10 @@ export function HamburgerMenu() {
                           <Link
                             href={currentSubmenu!.href}
                             onClick={closeMenu}
-                            className="inline outline-none"
+                            className="inline outline-none group"
                           >
                             <span
-                              className="touch-hamburger-text font-bold text-foreground tracking-tight leading-relaxed hover:opacity-70 transition-opacity"
+                              className="touch-hamburger-text font-bold text-foreground tracking-tight leading-relaxed hover:opacity-70 group-focus-visible:opacity-70 transition-opacity"
                               style={{ textRendering: "geometricPrecision" }}
                             >
                               {t(currentSubmenu!.exploreKey)}
@@ -385,10 +447,10 @@ export function HamburgerMenu() {
                             <Link
                               href={currentSubmenu!.href}
                               onClick={closeMenu}
-                              className="inline outline-none"
+                              className="inline outline-none group"
                             >
                               <span
-                                className="touch-hamburger-text font-bold text-foreground tracking-tight leading-relaxed hover:opacity-70 transition-opacity"
+                                className="touch-hamburger-text font-bold text-foreground tracking-tight leading-relaxed hover:opacity-70 group-focus-visible:opacity-70 transition-opacity"
                                 style={{ textRendering: "geometricPrecision" }}
                               >
                                 {t(`menu.${itemKey}`)}

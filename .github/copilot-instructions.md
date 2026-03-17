@@ -240,4 +240,4 @@ npm run clean           # Deep sanitization (node_modules, .next, coverage)
 
 ---
 
-**Last Updated:** January 2026 | **Version:** 0.3.0 | **Status:** Production-Ready
+**Last Updated:** March 2026 | **Version:** 0.4.0 | **Status:** Production-Ready

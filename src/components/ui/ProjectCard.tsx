@@ -87,6 +87,10 @@ export function ProjectCard({
   const [imageStatus, setImageStatus] = useState<'loading' | 'loaded' | 'error'>('loading');
   const imgRef = useRef<HTMLImageElement>(null);
 
+  const [isHovered, setIsHovered] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
+  const isActive = isHovered || isFocused;
+
   useIsomorphicLayoutEffect(() => {
     if (imgRef.current && imgRef.current.complete) {
       if (imgRef.current.naturalWidth > 0) {
@@ -103,7 +107,7 @@ export function ProjectCard({
         href={`/projects/${id}`}
         target="_self"
         rel={undefined}
-        className="rounded-full px-6 py-3 text-sm font-medium"
+        className="rounded-full px-6 py-3 text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-[#101010]"
       >
         {t("view_case")}
       </PrimaryButton>
@@ -112,7 +116,7 @@ export function ProjectCard({
         href={`/projects/${id}/demo`}
         target="_self"
         rel={undefined}
-        className="rounded-full px-6 py-3 text-sm font-medium"
+        className="rounded-full px-6 py-3 text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-[#101010]"
       >
         {t("visit_site")}
       </SecondaryButton>
@@ -121,21 +125,32 @@ export function ProjectCard({
 
   return (
     <motion.div
+      layout
       variants={variants}
-      whileHover="hover"
-      onHoverStart={onHover}
+      animate={isActive ? "hover" : undefined}
+      onHoverStart={() => {
+        setIsHovered(true);
+        if (onHover) onHover();
+      }}
+      onHoverEnd={() => setIsHovered(false)}
+      onFocus={() => setIsFocused(true)}
+      onBlur={(e) => {
+        if (!e.currentTarget.contains(e.relatedTarget)) {
+          setIsFocused(false);
+        }
+      }}
       className={cn(
-        "project-card group relative flex flex-col justify-end overflow-hidden rounded-4xl sm:rounded-[40px]",
+        "project-card group relative flex flex-col justify-end overflow-clip rounded-4xl sm:rounded-[40px]",
         "xl:min-w-[22rem]",
         "border border-white/5",
         "bg-[#101010]",
-        "shadow-sm hover:shadow-2xl transition-shadow duration-450",
+        "shadow-sm hover:shadow-2xl focus-within:shadow-2xl transition-shadow duration-450",
         colSpan,
         className
       )}
       style={{ willChange: "transform, filter" }}
     >
-      <div className="absolute inset-0 z-0 overflow-hidden transform-gpu" style={{ transform: "translate3d(0,0,0)" }}>
+      <div className="absolute inset-0 z-0 overflow-clip transform-gpu" style={{ transform: "translate3d(0,0,0)" }}>
         <AnimatePresence mode="popLayout">
           {showFallback && (
             <motion.div

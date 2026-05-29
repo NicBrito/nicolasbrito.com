@@ -124,6 +124,7 @@ export function HamburgerMenu() {
     directionRef.current = "overlay";
     setDirection("overlay");
     setIsClosing(true);
+    if (closeTimeout.current) clearTimeout(closeTimeout.current);
     closeTimeout.current = setTimeout(() => {
       setIsOpen(false);
       setIsClosing(false);
@@ -217,7 +218,7 @@ export function HamburgerMenu() {
       const navItems = menuContentRef.current
         ? Array.from(
             menuContentRef.current.querySelectorAll<HTMLElement>("a[href], button")
-          ).filter((el) => el.offsetParent !== null)
+          )
         : [];
 
       const focusable: HTMLElement[] = activeSubmenu

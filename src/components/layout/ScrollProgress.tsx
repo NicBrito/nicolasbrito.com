@@ -52,6 +52,8 @@ export function ScrollProgress() {
   const [isBouncing, setIsBouncing] = useState(false);
   const scrollTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const bounceTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isScrollingRef = useRef(false);
+  const isBouncingRef = useRef(false);
   const { scrollY } = useScroll();
   const hasScrollbar = contentHeight > windowHeight;
 
@@ -90,7 +92,8 @@ export function ScrollProgress() {
   const y = useTransform(
     scrollY,
     [0, maxScrollDistance],
-    [scrollbarThumbHeight / 2, maxThumbPosition + scrollbarThumbHeight / 2]
+    [scrollbarThumbHeight / 2, maxThumbPosition + scrollbarThumbHeight / 2],
+    { clamp: true }
   );
 
   useEffect(() => {
@@ -153,22 +156,38 @@ export function ScrollProgress() {
   useMotionValueEvent(scrollY, "change", (latest) => {
     if (!hasScrollbar || !hasPointerDevice) return;
 
-    setIsScrolling((prev) => (prev ? prev : true));
+    if (!isScrollingRef.current) {
+      isScrollingRef.current = true;
+      setIsScrolling(true);
+    }
 
+    const previous = scrollY.getPrevious();
+    const prevY = previous ?? latest;
+    
     const maxScroll = contentHeight - windowHeight;
+    
     const isAtTop = latest <= SCROLL_EDGE_THRESHOLD_PX;
+    const wasAtTop = prevY <= SCROLL_EDGE_THRESHOLD_PX;
+    
     const isAtBottom = latest >= maxScroll - SCROLL_EDGE_THRESHOLD_PX;
+    const wasAtBottom = prevY >= maxScroll - SCROLL_EDGE_THRESHOLD_PX;
 
-    if (isAtTop || isAtBottom) {
-      setIsBouncing((prev) => (prev ? prev : true));
+    const justHitTop = isAtTop && !wasAtTop;
+    const justHitBottom = isAtBottom && !wasAtBottom;
+
+    if ((justHitTop || justHitBottom) && !isBouncingRef.current) {
+      isBouncingRef.current = true;
+      setIsBouncing(true);
       if (bounceTimeout.current) clearTimeout(bounceTimeout.current);
       bounceTimeout.current = setTimeout(() => {
+        isBouncingRef.current = false;
         setIsBouncing(false);
       }, BOUNCE_RESET_DELAY_MS);
     }
 
     if (scrollTimeout.current) clearTimeout(scrollTimeout.current);
     scrollTimeout.current = setTimeout(() => {
+      isScrollingRef.current = false;
       setIsScrolling(false);
     }, SCROLL_IDLE_DELAY_MS);
   });

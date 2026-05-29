@@ -13,9 +13,9 @@ To ensure the robustness of the animation system and satisfy strict TypeScript c
 
 ## 3. Infrastructure Modernization
 
-### 3.1. Optimized Custom Server (`server.ts`)
-* **Update:** Replacement of legacy Node.js APIs (`url.parse`) with native Next.js framework methods (`app.getRequestHandler`).
-* **Impact:** This modernization eliminates deprecation warnings (`DEP0169`), cleans up the server console, and aligns the local development environment with the latest Vercel runtime standards.
+### 3.1. Native Local HTTPS
+* **Update:** Removal of the custom `server.ts` in favor of Next.js 16 native experimental HTTPS flag (`next dev --experimental-https`), configured with `TRUST_STORES=system,nss` to prevent local certificate errors.
+* **Impact:** Eliminates the need for a custom Node.js server, removes external runtime dependencies (`tsx`), cleans up the server console, and aligns the local development environment perfectly with the Vercel standard runtime.
 
 ### 3.2. Build & Production Stability
 * **Integrity:** Successful execution of the build pipeline (`next build`), confirming correct Static Site Generation (SSG) and asset optimization.

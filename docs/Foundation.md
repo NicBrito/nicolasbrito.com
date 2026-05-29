@@ -12,7 +12,7 @@ Complete UI reconstruction strictly adhering to the **Apple Design System** (ext
 * **Icons:** Lucide React.
 * **Testing:** Vitest + React Testing Library + JSDOM.
 * **Quality & Git Hooks:** ESLint, Husky, Commitlint (Conventional Commits).
-* **Local Environment:** Custom HTTPS server (`server.ts`) with local certificates (`mkcert`).
+* **Local Environment:** Native Next.js HTTPS (`next dev --experimental-https`) with automated local certificates (`mkcert`).
 
 ## 3. Directory Architecture (Feature-based)
 The project adopts a clean structure within `src/`, decoupling business context from global utilities.
@@ -49,7 +49,7 @@ src/
 ## 5. Infrastructure & Local DevOps
 
 ### 5.1. Security & HTTPS
-* Implementation of a custom server (`server.ts`) to run `localhost` with real HTTPS, enabling faithful testing of secure APIs and browser features.
+* Implementation of native Next.js HTTPS (`--experimental-https`) to run `localhost` with real HTTPS, eliminating custom server configurations while enabling faithful testing of secure APIs and browser features.
 
 ### 5.2. Quality Pipeline
 * **Unit Testing:** Vitest configuration (`vitest.config.ts`) with JSDOM environment.

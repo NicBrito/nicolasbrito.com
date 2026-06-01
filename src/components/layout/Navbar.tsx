@@ -115,7 +115,7 @@ export function Navbar() {
     const navItemRefs = useRef<Map<string, HTMLAnchorElement>>(new Map());
     const dropdownItemRefs = useRef<Map<string, HTMLAnchorElement>>(new Map());
     const exploreItemRefs = useRef<Map<string, HTMLAnchorElement>>(new Map());
-    const escKeyPressedRef = useRef(false);
+    const escKeyPressedRef = useRef<string | boolean>(false);
     const hoverDelayRef = useRef<NodeJS.Timeout | null>(null);
 
     const openMenu = useCallback((menuKey: MenuKey) => {
@@ -178,7 +178,7 @@ export function Navbar() {
 
         if (e.key === "Escape") {
             e.preventDefault();
-            escKeyPressedRef.current = true;
+            escKeyPressedRef.current = menuKey;
             const navRef = navItemRefs.current.get(menuKey);
             if (navRef) {
                 navRef.focus();
@@ -212,6 +212,9 @@ export function Navbar() {
 
     const handleNavItemFocus = useCallback((item: NavItem) => {
         setFocusedNavItem(item.key);
+        if (escKeyPressedRef.current !== false && escKeyPressedRef.current !== item.key) {
+            escKeyPressedRef.current = false;
+        }
     }, []);
 
     const handleNavItemBlur = useCallback((e: React.FocusEvent) => {
@@ -253,7 +256,7 @@ export function Navbar() {
             setActiveMenu(null);
             setFocusedNavItem(null);
         } else if (e.key === "Tab" && !e.shiftKey) {
-            if (item.hasDropdown && !escKeyPressedRef.current) {
+            if (item.hasDropdown && escKeyPressedRef.current !== item.key) {
                 e.preventDefault();
                 setActiveMenu(item.key as MenuKey);
                 setTimeout(() => {
@@ -285,7 +288,7 @@ export function Navbar() {
                         nextElement.focus();
                     }
                 }, 0);
-            } else if (escKeyPressedRef.current) {
+            } else if (escKeyPressedRef.current === item.key) {
                 escKeyPressedRef.current = false;
             }
         } else if (e.key === "Tab" && e.shiftKey) {
@@ -295,6 +298,7 @@ export function Navbar() {
             } else if (itemIndex === 0 && activeMenu === null) {
                 setFocusedNavItem(null);
             }
+            escKeyPressedRef.current = false;
         }
     }, [activeMenu]);
 
@@ -306,7 +310,7 @@ export function Navbar() {
 
         if (e.key === "Escape") {
             e.preventDefault();
-            escKeyPressedRef.current = true;
+            escKeyPressedRef.current = menuKey;
             const navRef = navItemRefs.current.get(menuKey);
             if (navRef) {
                 navRef.focus();

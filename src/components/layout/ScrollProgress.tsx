@@ -67,18 +67,10 @@ export function ScrollProgress() {
 
     syncPointerDevice();
 
-    if (typeof mediaQuery.addEventListener === "function") {
-      mediaQuery.addEventListener("change", syncPointerDevice);
-    } else {
-      mediaQuery.addListener(syncPointerDevice);
-    }
+    mediaQuery.addEventListener("change", syncPointerDevice);
 
     return () => {
-      if (typeof mediaQuery.removeEventListener === "function") {
-        mediaQuery.removeEventListener("change", syncPointerDevice);
-      } else {
-        mediaQuery.removeListener(syncPointerDevice);
-      }
+      mediaQuery.removeEventListener("change", syncPointerDevice);
     };
   }, []);
 

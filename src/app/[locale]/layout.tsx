@@ -15,15 +15,24 @@ export const viewport: Viewport = {
   themeColor: '#000000',
   width: 'device-width',
   initialScale: 1,
-  maximumScale: 1,
 };
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://nicolasbrito.com'),
   title: {
     template: '%s | Nicolas Brito',
     default: 'Nicolas Brito | Software Engineer',
   },
   description: 'Portfolio and software engineering showcase.',
+  openGraph: {
+    type: 'website',
+    siteName: 'Nicolas Brito',
+    locale: 'en_US',
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
   icons: {
     icon: '/favicon.ico',
     apple: '/apple-touch-icon.png',

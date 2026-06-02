@@ -11,7 +11,6 @@ export interface SocialLinkProps {
   className?: string;
   target?: string;
   rel?: string;
-  iconSize?: number;
 }
 
 const BASE_CLASS = "group relative p-4 rounded-[22%] bg-gradient-to-br from-white/10 to-white/5 border border-white/15 text-foreground/70 hover:text-white focus-visible:text-white hover:from-white/15 hover:to-white/10 focus-visible:from-white/15 focus-visible:to-white/10 transition-colors duration-200 backdrop-blur-md shadow-[inset_0_0_15px_rgba(255,255,255,0.05)] hover:shadow-[inset_0_0_20px_rgba(255,255,255,0.1)] focus-visible:shadow-[inset_0_0_20px_rgba(255,255,255,0.1)] focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background overflow-hidden cursor-pointer";

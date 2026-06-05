@@ -74,6 +74,43 @@
       }
     }
   },
+  "Games": {
+    "section_title": "Jogos em Destaque.",
+    "view_game": "Ver Jogo",
+    "play_now": "Jogar Agora",
+    "progress": {
+      "play": "Reproduzir apresentação",
+      "pause": "Pausar apresentação",
+      "go_to": "Ir para slide"
+    },
+    "items": {
+      "game-1": {
+        "title": "Jogo 1",
+        "description": "Descrição elegante e resumida do Jogo 1.",
+        "alt": "Prévia do Jogo 1"
+      },
+      "game-2": {
+        "title": "Jogo 2",
+        "description": "Descrição elegante e resumida do Jogo 2.",
+        "alt": "Prévia do Jogo 2"
+      },
+      "game-3": {
+        "title": "Jogo 3",
+        "description": "Descrição elegante e resumida do Jogo 3.",
+        "alt": "Prévia do Jogo 3"
+      },
+      "game-4": {
+        "title": "Jogo 4",
+        "description": "Descrição elegante e resumida do Jogo 4.",
+        "alt": "Prévia do Jogo 4"
+      },
+      "game-5": {
+        "title": "Jogo 5",
+        "description": "Descrição elegante e resumida do Jogo 5.",
+        "alt": "Prévia do Jogo 5"
+      }
+    }
+  },
   "ScrollProgress": {
     "home": "Início",
     "projects": "Projetos",

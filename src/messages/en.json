@@ -74,6 +74,43 @@
       }
     }
   },
+  "Games": {
+    "section_title": "Selected Games.",
+    "view_game": "View Game",
+    "play_now": "Play Now",
+    "progress": {
+      "play": "Play slideshow",
+      "pause": "Pause slideshow",
+      "go_to": "Go to slide"
+    },
+    "items": {
+      "game-1": {
+        "title": "Game 1",
+        "description": "Elegant and summarized description of Game 1.",
+        "alt": "Preview of Game 1"
+      },
+      "game-2": {
+        "title": "Game 2",
+        "description": "Elegant and summarized description of Game 2.",
+        "alt": "Preview of Game 2"
+      },
+      "game-3": {
+        "title": "Game 3",
+        "description": "Elegant and summarized description of Game 3.",
+        "alt": "Preview of Game 3"
+      },
+      "game-4": {
+        "title": "Game 4",
+        "description": "Elegant and summarized description of Game 4.",
+        "alt": "Preview of Game 4"
+      },
+      "game-5": {
+        "title": "Game 5",
+        "description": "Elegant and summarized description of Game 5.",
+        "alt": "Preview of Game 5"
+      }
+    }
+  },
   "ScrollProgress": {
     "home": "Home",
     "projects": "Projects",

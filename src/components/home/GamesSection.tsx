@@ -36,17 +36,17 @@ const EASE_ACCEL: [number, number, number, number] = [0.4, 0, 1, 1];
 const NOISE_SVG =
   "data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='1'/%3E%3C/svg%3E";
 
-const CARD_PEEK = 130;
 const CARD_GAP  = 20;
+const MAX_CARD_WIDTH = 1200;
 
 const HOVER_BLEED = 16;
 
-const DOT_H         = 12;
-const CONTROL_H     = 52;
-const ACTIVE_DOT_W  = 56;
-const PILL_VERT_PX  = (CONTROL_H - DOT_H) / 2;
-const PILL_HORIZ_PX = 18;
-const BTN_GAP       = 14;
+const DOT_H         = "clamp(0.5rem, 1vw, 0.75rem)";
+const CONTROL_H     = "clamp(3rem, 5vw, 3.5rem)";
+const ACTIVE_DOT_W  = "clamp(2.5rem, 4vw, 3.5rem)";
+const PILL_VERT_PX  = "clamp(1.25rem, 2vw, 1.375rem)";
+const PILL_HORIZ_PX = "clamp(1.125rem, 2vw, 1.375rem)";
+const BTN_GAP       = "clamp(0.75rem, 1.5vw, 1rem)";
 
 const CONTROLS_BOTTOM = 32;
 
@@ -156,14 +156,15 @@ function GamesProgressControls({
     <div
       ref={outerRef}
       style={{
-        position:  "sticky",
-        bottom:    CONTROLS_BOTTOM,
-        left:      "50%",
-        transform: "translateX(-50%)",
-        zIndex:    50,
-        
-        width:     "max-content",
-        margin:    "0 auto",
+        position:       "sticky",
+        bottom:         CONTROLS_BOTTOM,
+        left:           0,
+        width:          "100%",
+        zIndex:         50,
+        display:        "flex",
+        justifyContent: "center",
+        alignItems:     "center",
+        pointerEvents:  "none",
       }}
     >
       <AnimatePresence>
@@ -187,7 +188,7 @@ function GamesProgressControls({
               },
             }}
             className="flex items-center"
-            style={{ gap: BTN_GAP, transformOrigin: "center bottom" }}
+            style={{ gap: BTN_GAP, transformOrigin: "center bottom", pointerEvents: "none" }}
           >
             <motion.div
               initial={{ 
@@ -216,6 +217,7 @@ function GamesProgressControls({
               }}
               style={{
                 ...GLASS_STYLE,
+                pointerEvents:   "auto",
                 zIndex:          10,
                 display:         "flex",
                 alignItems:      "center",
@@ -224,7 +226,7 @@ function GamesProgressControls({
                 paddingBottom:   PILL_VERT_PX,
                 paddingLeft:     PILL_HORIZ_PX,
                 paddingRight:    PILL_HORIZ_PX,
-                gap:             8,
+                gap:             "clamp(0.5rem, 1.5vw, 0.625rem)",
                 transformOrigin: "center center",
               }}
               role="tablist"
@@ -276,7 +278,7 @@ function GamesProgressControls({
               initial={{ 
                 opacity: 0, 
                 scale: reduced ? 1 : 0.2, 
-                x: reduced ? 0 : -(BTN_GAP + CONTROL_H),
+                x: reduced ? 0 : -66,
                 backdropFilter: "blur(0px)",
               }}
               animate={{
@@ -292,7 +294,7 @@ function GamesProgressControls({
               exit={{
                 opacity: 0,
                 scale:   reduced ? 1 : 0,
-                x:       reduced ? 0 : -(BTN_GAP + CONTROL_H),
+                x:       reduced ? 0 : -66,
                 backdropFilter: "blur(0px)",
                 transition: {
                   opacity: { duration: 0.22, ease: EASE_IN },
@@ -301,12 +303,13 @@ function GamesProgressControls({
                   backdropFilter: { duration: 0.22, ease: EASE_IN },
                 },
               }}
-              whileTap={{ scale: reduced ? 1 : 0.86, transition: { duration: 0.1 } }}
               onClick={onTogglePlay}
               aria-label={isPlaying ? pauseLabel : playLabel}
               className="flex-shrink-0 flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 transition-[filter] duration-200 hover:brightness-125 active:brightness-75"
               style={{
                 ...GLASS_STYLE,
+                pointerEvents:  "auto",
+                display:        "flex",
                 zIndex:          5,
                 width:           CONTROL_H,
                 height:          CONTROL_H,
@@ -317,8 +320,8 @@ function GamesProgressControls({
               }}
             >
               {isPlaying
-                ? <Pause size={18} fill="rgba(215,215,215,0.95)" stroke="none" strokeWidth={0} />
-                : <Play  size={18} fill="rgba(215,215,215,0.95)" stroke="none" strokeWidth={0} style={{ transform: "translateX(1px)" }} />
+                ? <Pause size={20} fill="rgba(215,215,215,0.95)" stroke="none" strokeWidth={0} />
+                : <Play  size={20} fill="rgba(215,215,215,0.95)" stroke="none" strokeWidth={0} style={{ transform: "translateX(1.5px)" }} />
               }
             </motion.button>
           </motion.div>
@@ -356,6 +359,10 @@ export function GamesSection() {
   const textShowRef     = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const hoverUnlockRef  = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
+  const wheelAccumulatorRef = useRef(0);
+  const wheelLockRef        = useRef(false);
+  const wheelTimeoutRef     = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+
   const hoveredIdxRef       = useRef<number | null>(null);
 
   useEffect(() => {
@@ -376,9 +383,24 @@ export function GamesSection() {
     return () => ro.disconnect();
   }, []);
 
-  const cardWidth = Math.max(0, containerWidth - 2 * CARD_PEEK);
-  const trackX    = containerWidth > 0
-    ? CARD_PEEK - currentIndex * (cardWidth + CARD_GAP)
+  const getCardWidth = (width: number) => {
+    if (width === 0) return 0;
+    
+    // Dynamic peek scaling from 24px on mobile up to 120px on desktop
+    let dynamicPeek = 24;
+    if (width >= 640) {
+      dynamicPeek = Math.min(width * 0.08, 120);
+    }
+    
+    let w = width - 2 * dynamicPeek;
+    if (w > MAX_CARD_WIDTH) w = MAX_CARD_WIDTH;
+    
+    return w;
+  };
+
+  const cardWidth = getCardWidth(containerWidth);
+  const trackX = containerWidth > 0 
+    ? (containerWidth - cardWidth) / 2 - currentIndex * (cardWidth + CARD_GAP)
     : 0;
 
   useEffect(() => {
@@ -489,6 +511,47 @@ export function GamesSection() {
   }, [doAdvance]);
 
   useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    const handleWheel = (e: WheelEvent) => {
+      // Allow vertical scroll to pass through
+      if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) return;
+      e.preventDefault();
+
+      if (wheelLockRef.current) return;
+
+      wheelAccumulatorRef.current += e.deltaX;
+
+      const THRESHOLD = 50; 
+      
+      if (wheelAccumulatorRef.current > THRESHOLD) {
+        if (currentIndexRef.current < GAMES.length - 1) {
+          doAdvance(currentIndexRef.current + 1);
+          wheelLockRef.current = true;
+          setTimeout(() => { wheelLockRef.current = false; }, 650);
+        }
+        wheelAccumulatorRef.current = 0;
+      } else if (wheelAccumulatorRef.current < -THRESHOLD) {
+        if (currentIndexRef.current > 0) {
+          doAdvance(currentIndexRef.current - 1);
+          wheelLockRef.current = true;
+          setTimeout(() => { wheelLockRef.current = false; }, 650);
+        }
+        wheelAccumulatorRef.current = 0;
+      }
+
+      clearTimeout(wheelTimeoutRef.current);
+      wheelTimeoutRef.current = setTimeout(() => {
+        wheelAccumulatorRef.current = 0;
+      }, 150);
+    };
+
+    el.addEventListener("wheel", handleWheel, { passive: false });
+    return () => el.removeEventListener("wheel", handleWheel);
+  }, [doAdvance]);
+
+  useEffect(() => {
     if (!textVisible || !isPlaying || !isInView) { stopTimer(); return; }
     startProgressTimer();
     return () => stopTimer();
@@ -500,6 +563,7 @@ export function GamesSection() {
       clearTimeout(advanceRef.current);
       clearTimeout(textShowRef.current);
       clearTimeout(hoverUnlockRef.current);
+      clearTimeout(wheelTimeoutRef.current);
     },
     [],
   );
@@ -534,18 +598,18 @@ export function GamesSection() {
       ref={sectionRef}
       id="games"
       aria-labelledby="games-section-title"
-      className="relative w-full bg-background pt-16 sm:pt-20 md:pt-28 lg:pt-32"
+      className="relative w-full bg-background pt-[clamp(4rem,8vw,8rem)]"
       style={{
-        paddingBottom: `${CONTROLS_BOTTOM * 2 + CONTROL_H + 32}px`,
+        paddingBottom: `calc(6rem + ${CONTROL_H})`,
       }}
     >
-      <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto w-full max-w-7xl px-[clamp(1rem,3vw,2rem)]">
         <motion.div
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, margin: "-60px" }}
           variants={headingV}
-          className="mb-10 md:mb-14"
+          className="mb-8 md:mb-14"
         >
           <h2
             id="games-section-title"
@@ -579,13 +643,27 @@ export function GamesSection() {
               <motion.div
                 animate={{ x: trackX }}
                 transition={reduced ? { duration: 0.3, ease: EASE_OUT } : CARD_SPRING}
+                onPanEnd={(e, info) => {
+                  if (wheelLockRef.current) return;
+                  const swipe = info.offset.x;
+                  if (swipe < -40 && currentIndexRef.current < GAMES.length - 1) {
+                    doAdvance(currentIndexRef.current + 1);
+                    wheelLockRef.current = true;
+                    setTimeout(() => { wheelLockRef.current = false; }, 650);
+                  } else if (swipe > 40 && currentIndexRef.current > 0) {
+                    doAdvance(currentIndexRef.current - 1);
+                    wheelLockRef.current = true;
+                    setTimeout(() => { wheelLockRef.current = false; }, 650);
+                  }
+                }}
                 style={{
                   display:       "flex",
                   gap:           CARD_GAP,
-                  height:        "clamp(28rem, 72vh, 48rem)",
+                  height:        "clamp(24rem, 65vh, 48rem)",
                   willChange:    "transform",
                   paddingTop:    HOVER_BLEED,
                   paddingBottom: HOVER_BLEED,
+                  touchAction:   "pan-y",
                 }}
               >
                 {GAMES.map((game, idx) => {
@@ -707,7 +785,7 @@ export function GamesSection() {
 
                         return (
                           <motion.div
-                            className="relative z-30 flex flex-col p-7 sm:p-10"
+                            className="relative z-30 flex flex-col p-8 md:p-12"
                             animate={{
                               
                               y: hasPointer && !isHoverActive ? CONTENT_Y_DEFAULT : 0,
@@ -733,7 +811,7 @@ export function GamesSection() {
                                   opacity: { duration: TEXT_ENTER_S * 0.7, ease: "easeOut" },
                                 }}
                               >
-                                <h3 className="mb-2 text-2xl sm:text-3xl font-bold text-white tracking-tight drop-shadow-lg">
+                                <h3 className="mb-2 sm:mb-3 text-2xl sm:text-3xl font-bold text-white tracking-tight drop-shadow-lg leading-tight">
                                   {t(`items.${game.id}.title`)}
                                 </h3>
                                 <p className="text-base sm:text-lg text-white/90 font-medium leading-relaxed max-w-lg line-clamp-2 drop-shadow-md">
@@ -758,14 +836,14 @@ export function GamesSection() {
                                     ? { duration: 0.30, ease: EASE_CSS, delay: 0.04 }
                                     : { duration: 0.22, ease: EASE_ACCEL }
                                   }
-                                  className="mt-3 flex flex-row flex-wrap items-center gap-2.5"
+                                  className="mt-[clamp(0.75rem,2vw,1.25rem)] flex flex-row flex-wrap items-center gap-[clamp(0.5rem,1.5vw,0.75rem)]"
                                   style={{ pointerEvents: isHoverActive && textVisible ? "auto" : "none" }}
                                 >
                                   <PrimaryButton
                                     href={`/games/${game.id}`}
                                     target="_self"
                                     rel={undefined}
-                                    className="rounded-full px-6 py-3 text-sm font-medium focus-visible:ring-offset-[#101010]"
+                                    className="rounded-full px-6 py-3.5 sm:py-3 text-[15px] sm:text-sm font-medium focus-visible:ring-offset-[#101010]"
                                   >
                                     {t("view_game")}
                                   </PrimaryButton>
@@ -773,7 +851,7 @@ export function GamesSection() {
                                     href={`/games/${game.id}/play`}
                                     target="_self"
                                     rel={undefined}
-                                    className="rounded-full px-6 py-3 text-sm font-medium focus-visible:ring-offset-[#101010]"
+                                    className="rounded-full px-6 py-3.5 sm:py-3 text-[15px] sm:text-sm font-medium focus-visible:ring-offset-[#101010]"
                                   >
                                     {t("play_now")}
                                   </SecondaryButton>
@@ -798,13 +876,13 @@ export function GamesSection() {
                                   x:       reduced ? 0 : exitX,
                                   transition: { duration: TEXT_EXIT_S, ease: EASE_IN },
                                 }}
-                                className="mt-3 flex flex-row flex-wrap items-center gap-2.5"
+                                className="mt-[clamp(0.75rem,2vw,1.25rem)] flex flex-row flex-wrap items-center gap-[clamp(0.5rem,1.5vw,0.75rem)]"
                               >
                                 <PrimaryButton
                                   href={`/games/${game.id}`}
                                   target="_self"
                                   rel={undefined}
-                                  className="rounded-full px-6 py-3 text-sm font-medium focus-visible:ring-offset-[#101010]"
+                                  className="rounded-full px-6 py-3.5 sm:py-3 text-[15px] sm:text-sm font-medium focus-visible:ring-offset-[#101010]"
                                 >
                                   {t("view_game")}
                                 </PrimaryButton>
@@ -812,7 +890,7 @@ export function GamesSection() {
                                   href={`/games/${game.id}/play`}
                                   target="_self"
                                   rel={undefined}
-                                  className="rounded-full px-6 py-3 text-sm font-medium focus-visible:ring-offset-[#101010]"
+                                  className="rounded-full px-6 py-3.5 sm:py-3 text-[15px] sm:text-sm font-medium focus-visible:ring-offset-[#101010]"
                                 >
                                   {t("play_now")}
                                 </SecondaryButton>

@@ -138,16 +138,63 @@ interface GamesProgressControlsProps {
   pauseLabel:    string;
   goToLabel:     string;
   carouselLabel: string;
+  onFocusPrimaryBtn: (idx?: number) => void;
+  onAdvanceNext: () => void;
 }
 
 function GamesProgressControls({
   currentIndex, totalCards, isPlaying,
   fillRef, isVisible, onGoTo, onTogglePlay,
   playLabel, pauseLabel, goToLabel, carouselLabel,
+  onFocusPrimaryBtn, onAdvanceNext,
 }: GamesProgressControlsProps) {
   const outerRef = useRef<HTMLDivElement>(null);
+  const dotsRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const playBtnRef = useRef<HTMLButtonElement>(null);
   const reduced  = useReducedMotion();
   const hasPointer = useHasPointer();
+
+  const handleDotKeyDown = (e: React.KeyboardEvent, idx: number) => {
+    if (e.key === "ArrowRight") {
+      e.preventDefault();
+      if (idx < totalCards - 1) dotsRefs.current[idx + 1]?.focus();
+      else playBtnRef.current?.focus();
+    } else if (e.key === "ArrowLeft") {
+      e.preventDefault();
+      if (idx > 0) dotsRefs.current[idx - 1]?.focus();
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      onGoTo(idx);
+      onFocusPrimaryBtn(idx);
+    } else if (e.key === " ") {
+      e.preventDefault();
+      onTogglePlay();
+      onFocusPrimaryBtn();
+    } else if (e.key === "Escape" || e.key === "ArrowUp") {
+      e.preventDefault();
+      onFocusPrimaryBtn();
+    } else if (e.key === "Tab") {
+      e.preventDefault();
+      onAdvanceNext();
+    }
+  };
+
+  const handlePlayBtnKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "ArrowLeft") {
+      e.preventDefault();
+      dotsRefs.current[totalCards - 1]?.focus();
+    } else if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      onTogglePlay();
+      onFocusPrimaryBtn();
+    } else if (e.key === "Escape" || e.key === "ArrowUp") {
+      e.preventDefault();
+      onFocusPrimaryBtn();
+    } else if (e.key === "Tab") {
+      e.preventDefault();
+      onAdvanceNext();
+    }
+  };
 
   const wrapperSpring = { type: "spring" as const, stiffness: 260, damping: 24, mass: 0.8 };
   const pillSpring    = { type: "spring" as const, stiffness: 320, damping: 28, mass: 0.7 };
@@ -238,10 +285,14 @@ function GamesProgressControls({
                 return (
                   <button
                     key={idx}
+                    id={`game-dot-${idx}`}
+                    ref={(el) => { dotsRefs.current[idx] = el; }}
                     role="tab"
                     aria-selected={isActive}
                     aria-label={`${goToLabel} ${idx + 1}`}
                     onClick={() => onGoTo(idx)}
+                    onKeyDown={(e) => handleDotKeyDown(e, idx)}
+                    tabIndex={-1}
                     className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 transition-[filter,width,background-color] duration-200 hover:brightness-125 active:brightness-75"
                     style={{
                       position:     "relative",
@@ -276,6 +327,7 @@ function GamesProgressControls({
             </motion.div>
 
             <motion.button
+              ref={playBtnRef}
               initial={{ 
                 opacity: 0, 
                 scale: reduced ? 1 : 0.2, 
@@ -305,6 +357,8 @@ function GamesProgressControls({
                 },
               }}
               onClick={onTogglePlay}
+              onKeyDown={handlePlayBtnKeyDown}
+              tabIndex={-1}
               aria-label={isPlaying ? pauseLabel : playLabel}
               className="flex-shrink-0 flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 transition-[filter] duration-200 hover:brightness-125 active:brightness-75"
               style={{
@@ -349,7 +403,8 @@ export function GamesSection() {
   const [isInView,          setIsInView         ] = useState(false);
   const [isControlsVisible, setIsControlsVisible] = useState(false);
   const [containerWidth,    setContainerWidth   ] = useState(0);
-  const [isHoverLocked,       setIsHoverLocked      ] = useState(false);
+  const [isHoverLocked,     setIsHoverLocked    ] = useState(false);
+  const [isKeyboardFocused, setIsKeyboardFocused] = useState(false);
 
   const rafRef          = useRef(0);
   const timerActiveRef  = useRef(false);
@@ -366,7 +421,52 @@ export function GamesSection() {
   const hasDeceleratedRef   = useRef(false);
   const gestureTypeRef      = useRef<"UNKNOWN" | "SWIPE" | "RAPID_HOLD">("UNKNOWN");
 
+  const primaryBtnRefs      = useRef<(HTMLAnchorElement | null)[]>([]);
+  const secondaryBtnRefs    = useRef<(HTMLAnchorElement | null)[]>([]);
+
   const hoveredIdxRef       = useRef<number | null>(null);
+  const pendingFocusRef     = useRef<{ idx: number; type: "primary" | "secondary" } | null>(null);
+  const isMouseDownRef      = useRef(false);
+  const isKeyboardFocusedRef = useRef(false);
+
+  useEffect(() => {
+    isKeyboardFocusedRef.current = isKeyboardFocused;
+  }, [isKeyboardFocused]);
+
+  useEffect(() => {
+    const handleMouseDown = () => { isMouseDownRef.current = true; };
+    const handleMouseUp = () => { isMouseDownRef.current = false; };
+    // also handle touch
+    const handleTouchStart = () => { isMouseDownRef.current = true; };
+    const handleTouchEnd = () => { isMouseDownRef.current = false; };
+    
+    document.addEventListener("mousedown", handleMouseDown, { passive: true });
+    document.addEventListener("mouseup", handleMouseUp, { passive: true });
+    document.addEventListener("touchstart", handleTouchStart, { passive: true });
+    document.addEventListener("touchend", handleTouchEnd, { passive: true });
+    return () => {
+      document.removeEventListener("mousedown", handleMouseDown);
+      document.removeEventListener("mouseup", handleMouseUp);
+      document.removeEventListener("touchstart", handleTouchStart);
+      document.removeEventListener("touchend", handleTouchEnd);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (textVisible && !isHoverLocked && pendingFocusRef.current !== null) {
+      setTimeout(() => {
+        const focusData = pendingFocusRef.current;
+        if (!focusData) return;
+        const { idx, type } = focusData;
+        if (type === "primary") {
+          primaryBtnRefs.current[idx]?.focus();
+        } else {
+          secondaryBtnRefs.current[idx]?.focus();
+        }
+        pendingFocusRef.current = null;
+      }, 50);
+    }
+  }, [textVisible, isHoverLocked]);
 
   useEffect(() => {
     hoveredIdxRef.current = hoveredIdx;
@@ -488,7 +588,11 @@ export function GamesSection() {
     const remainingMs = remaining * dur;
 
     if (remainingMs <= 0) {
-      doAdvance((currentIndexRef.current + 1) % GAMES.length);
+      const nextIdx = (currentIndexRef.current + 1) % GAMES.length;
+      if (isKeyboardFocusedRef.current) {
+        pendingFocusRef.current = { idx: nextIdx, type: "primary" };
+      }
+      doAdvance(nextIdx);
       return;
     }
 
@@ -501,7 +605,11 @@ export function GamesSection() {
 
       if (p >= 1) {
         timerActiveRef.current = false;
-        doAdvance((currentIndexRef.current + 1) % GAMES.length);
+        const nextIdx = (currentIndexRef.current + 1) % GAMES.length;
+        if (isKeyboardFocusedRef.current) {
+          pendingFocusRef.current = { idx: nextIdx, type: "primary" };
+        }
+        doAdvance(nextIdx);
         return;
       }
 
@@ -635,6 +743,79 @@ export function GamesSection() {
     [doAdvance],
   );
 
+  const handleFocusPrimaryBtn = useCallback((idx?: number) => {
+    const targetIdx = idx ?? currentIndexRef.current;
+    if (targetIdx === currentIndexRef.current) {
+      setTimeout(() => primaryBtnRefs.current[targetIdx]?.focus(), 50);
+    } else {
+      pendingFocusRef.current = { idx: targetIdx, type: "primary" };
+    }
+  }, []);
+  
+  const handleAdvanceNextAndFocus = useCallback(() => {
+    if (currentIndexRef.current < GAMES.length - 1) {
+      const nextIdx = currentIndexRef.current + 1;
+      pendingFocusRef.current = { idx: nextIdx, type: "primary" };
+      doAdvance(nextIdx);
+    }
+  }, [doAdvance]);
+
+  const handlePrimaryKeyDown = useCallback((e: React.KeyboardEvent, idx: number) => {
+    if (e.key === "Tab" && e.shiftKey) {
+      if (idx > 0) {
+        e.preventDefault();
+        pendingFocusRef.current = { idx: idx - 1, type: "secondary" };
+        doAdvance(idx - 1);
+      }
+    } else if (e.key === "ArrowRight") {
+      e.preventDefault();
+      if (idx < GAMES.length - 1) {
+        pendingFocusRef.current = { idx: idx + 1, type: "primary" };
+        doAdvance(idx + 1);
+      }
+    } else if (e.key === "ArrowLeft") {
+      e.preventDefault();
+      if (idx > 0) {
+        pendingFocusRef.current = { idx: idx - 1, type: "primary" };
+        doAdvance(idx - 1);
+      }
+    } else if (e.key === " ") {
+      e.preventDefault();
+      togglePlay();
+    } else if (e.key === "ArrowDown") {
+      e.preventDefault();
+      document.getElementById("game-dot-0")?.focus();
+    }
+  }, [doAdvance, togglePlay]);
+
+  const handleSecondaryKeyDown = useCallback((e: React.KeyboardEvent, idx: number) => {
+    if (e.key === "Tab" && !e.shiftKey) {
+      if (idx < GAMES.length - 1) {
+        e.preventDefault();
+        pendingFocusRef.current = { idx: idx + 1, type: "primary" };
+        doAdvance(idx + 1);
+      }
+    } else if (e.key === "ArrowRight") {
+      e.preventDefault();
+      if (idx < GAMES.length - 1) {
+        pendingFocusRef.current = { idx: idx + 1, type: "primary" };
+        doAdvance(idx + 1);
+      }
+    } else if (e.key === "ArrowLeft") {
+      e.preventDefault();
+      if (idx > 0) {
+        pendingFocusRef.current = { idx: idx - 1, type: "primary" };
+        doAdvance(idx - 1);
+      }
+    } else if (e.key === " ") {
+      e.preventDefault();
+      togglePlay();
+    } else if (e.key === "ArrowDown") {
+      e.preventDefault();
+      document.getElementById("game-dot-0")?.focus();
+    }
+  }, [doAdvance, togglePlay]);
+
   const enterX = direction === 1 ?  TEXT_SLIDE_X : -TEXT_SLIDE_X;
   const exitX  = direction === 1 ? -TEXT_SLIDE_X :  TEXT_SLIDE_X;
 
@@ -652,6 +833,20 @@ export function GamesSection() {
       ref={sectionRef}
       id="games"
       aria-labelledby="games-section-title"
+      onFocusCapture={() => {
+        if (!isMouseDownRef.current) {
+          if (!isKeyboardFocused) {
+            setIsKeyboardFocused(true);
+            setIsPlaying(false);
+          }
+        }
+      }}
+      onBlurCapture={(e) => {
+        if (!sectionRef.current?.contains(e.relatedTarget as Node)) {
+          setIsKeyboardFocused(false);
+          setIsPlaying(true);
+        }
+      }}
       className="relative w-full bg-background pt-[clamp(4rem,8vw,8rem)]"
       style={{
         paddingBottom: `calc(6rem + ${CONTROL_H})`,
@@ -725,7 +920,7 @@ export function GamesSection() {
                   const hasImage = !!game.image;
 
                   const isHoverActive =
-                    isActive && hoveredIdx === idx && !isHoverLocked && hasPointer;
+                    !isHoverLocked && isActive && ((hasPointer && hoveredIdx === idx) || isKeyboardFocused);
 
                   return (
                     <motion.div
@@ -839,7 +1034,7 @@ export function GamesSection() {
                       </div>
 
                       {(() => {
-                        const isHoverActive = hasPointer && hoveredIdx === idx && !isHoverLocked;
+                        const isHoverActive = !isHoverLocked && isActive && ((hasPointer && hoveredIdx === idx) || isKeyboardFocused);
 
                         return (
                           <motion.div
@@ -898,6 +1093,9 @@ export function GamesSection() {
                                   style={{ pointerEvents: isHoverActive && textVisible ? "auto" : "none" }}
                                 >
                                   <PrimaryButton
+                                    ref={(el: HTMLAnchorElement | null) => { primaryBtnRefs.current[idx] = el; }}
+                                    tabIndex={isActive ? 0 : -1}
+                                    onKeyDown={(e) => handlePrimaryKeyDown(e, idx)}
                                     href={`/games/${game.id}`}
                                     target="_self"
                                     rel={undefined}
@@ -906,6 +1104,9 @@ export function GamesSection() {
                                     {t("view_game")}
                                   </PrimaryButton>
                                   <SecondaryButton
+                                    ref={(el: HTMLAnchorElement | null) => { secondaryBtnRefs.current[idx] = el; }}
+                                    tabIndex={isActive ? 0 : -1}
+                                    onKeyDown={(e) => handleSecondaryKeyDown(e, idx)}
                                     href={`/games/${game.id}/play`}
                                     target="_self"
                                     rel={undefined}
@@ -937,6 +1138,9 @@ export function GamesSection() {
                                 className="mt-[clamp(0.75rem,2vw,1.25rem)] flex flex-row flex-wrap items-center gap-[clamp(0.5rem,1.5vw,0.75rem)]"
                               >
                                 <PrimaryButton
+                                  ref={(el: HTMLAnchorElement | null) => { primaryBtnRefs.current[idx] = el; }}
+                                  tabIndex={isActive ? 0 : -1}
+                                  onKeyDown={(e) => handlePrimaryKeyDown(e, idx)}
                                   href={`/games/${game.id}`}
                                   target="_self"
                                   rel={undefined}
@@ -945,6 +1149,9 @@ export function GamesSection() {
                                   {t("view_game")}
                                 </PrimaryButton>
                                 <SecondaryButton
+                                  ref={(el: HTMLAnchorElement | null) => { secondaryBtnRefs.current[idx] = el; }}
+                                  tabIndex={isActive ? 0 : -1}
+                                  onKeyDown={(e) => handleSecondaryKeyDown(e, idx)}
                                   href={`/games/${game.id}/play`}
                                   target="_self"
                                   rel={undefined}
@@ -980,6 +1187,8 @@ export function GamesSection() {
         pauseLabel={t("progress.pause")}
         goToLabel={t("progress.go_to")}
         carouselLabel={t("section_title")}
+        onFocusPrimaryBtn={handleFocusPrimaryBtn}
+        onAdvanceNext={handleAdvanceNextAndFocus}
       />
     </section>
   );

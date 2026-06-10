@@ -2,7 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import { motion, TargetAndTransition } from "framer-motion";
-import { ReactNode } from "react";
+import { ReactNode, forwardRef, Ref } from "react";
 
 export interface SecondaryButtonProps {
   children: ReactNode;
@@ -10,6 +10,8 @@ export interface SecondaryButtonProps {
   target?: string;
   className?: string;
   onClick?: () => void;
+  onKeyDown?: (e: React.KeyboardEvent<HTMLElement>) => void;
+  tabIndex?: number;
   disabled?: boolean;
   download?: boolean | string;
   rel?: string;
@@ -28,18 +30,24 @@ const BUTTON_BASE_CLASS =
 const BUTTON_SECONDARY_CLASS =
   "bg-white/5 hover:bg-white/10 focus-visible:bg-white/10 text-foreground border border-white/10 backdrop-blur-md shadow-lg shadow-black/5";
 
-export function SecondaryButton({
-  children,
-  href,
-  target = "_blank",
-  className,
-  onClick,
-  disabled = false,
-  download,
-  rel = "noopener noreferrer",
-  showArrow = false,
-  ariaLabel,
-}: SecondaryButtonProps) {
+export const SecondaryButton = forwardRef<HTMLElement, SecondaryButtonProps>(
+  (
+    {
+      children,
+      href,
+      target = "_blank",
+      className,
+      onClick,
+      onKeyDown,
+      tabIndex,
+      disabled = false,
+      download,
+      rel = "noopener noreferrer",
+      showArrow = false,
+      ariaLabel,
+    },
+    ref,
+  ) => {
   const buttonClass = cn(BUTTON_BASE_CLASS, BUTTON_SECONDARY_CLASS, className);
 
   const content = (
@@ -56,6 +64,7 @@ export function SecondaryButton({
   if (href) {
     return (
       <motion.a
+        ref={ref as Ref<HTMLAnchorElement>}
         href={href}
         target={target}
         download={download}
@@ -63,7 +72,8 @@ export function SecondaryButton({
         whileTap={TAP_ANIMATION}
         className={cn(buttonClass, "group gap-3")}
         aria-label={ariaLabel}
-        tabIndex={disabled ? -1 : 0}
+        tabIndex={tabIndex ?? (disabled ? -1 : 0)}
+        onKeyDown={onKeyDown}
       >
         {content}
       </motion.a>
@@ -72,15 +82,19 @@ export function SecondaryButton({
 
   return (
     <motion.button
+      ref={ref as Ref<HTMLButtonElement>}
       onClick={onClick}
       disabled={disabled}
       whileTap={TAP_ANIMATION}
       className={cn(buttonClass, "gap-3")}
       aria-label={ariaLabel}
       type="button"
-      tabIndex={disabled ? -1 : 0}
+      tabIndex={tabIndex ?? (disabled ? -1 : 0)}
+      onKeyDown={onKeyDown}
     >
       {content}
     </motion.button>
   );
-}
+});
+
+SecondaryButton.displayName = "SecondaryButton";

@@ -41,12 +41,12 @@ const MAX_CARD_WIDTH = 1200;
 
 const HOVER_BLEED = 16;
 
-const DOT_H         = "clamp(0.5rem, 1vw, 0.75rem)";
-const CONTROL_H     = "clamp(3rem, 5vw, 3.5rem)";
+const DOT_H         = "clamp(0.5rem, 1vw, 0.625rem)";
+const CONTROL_H     = "clamp(3.5rem, 6vw, 4rem)";
 const ACTIVE_DOT_W  = "clamp(2.5rem, 4vw, 3.5rem)";
-const PILL_VERT_PX  = "clamp(1.25rem, 2vw, 1.375rem)";
-const PILL_HORIZ_PX = "clamp(1.125rem, 2vw, 1.375rem)";
-const BTN_GAP       = "clamp(0.75rem, 1.5vw, 1rem)";
+const PILL_VERT_PX  = "clamp(1.5rem, 2.5vw, 1.6875rem)";
+const PILL_HORIZ_PX = "clamp(1.5rem, 2.5vw, 1.75rem)";
+const BTN_GAP       = "clamp(1rem, 2vw, 1.5rem)";
 
 const CONTROLS_BOTTOM = 32;
 
@@ -147,6 +147,7 @@ function GamesProgressControls({
 }: GamesProgressControlsProps) {
   const outerRef = useRef<HTMLDivElement>(null);
   const reduced  = useReducedMotion();
+  const hasPointer = useHasPointer();
 
   const wrapperSpring = { type: "spring" as const, stiffness: 260, damping: 24, mass: 0.8 };
   const pillSpring    = { type: "spring" as const, stiffness: 320, damping: 28, mass: 0.7 };
@@ -224,9 +225,9 @@ function GamesProgressControls({
                 borderRadius:    9999,
                 paddingTop:      PILL_VERT_PX,
                 paddingBottom:   PILL_VERT_PX,
-                paddingLeft:     PILL_HORIZ_PX,
-                paddingRight:    PILL_HORIZ_PX,
-                gap:             "clamp(0.5rem, 1.5vw, 0.625rem)",
+                paddingLeft:     hasPointer ? PILL_HORIZ_PX : "clamp(1.75rem, 3vw, 2.25rem)",
+                paddingRight:    hasPointer ? PILL_HORIZ_PX : "clamp(1.75rem, 3vw, 2.25rem)",
+                gap:             hasPointer ? "clamp(0.5rem, 1vw, 0.625rem)" : "clamp(1rem, 2vw, 1.25rem)",
                 transformOrigin: "center center",
               }}
               role="tablist"
@@ -360,8 +361,9 @@ export function GamesSection() {
   const hoverUnlockRef  = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   const wheelAccumulatorRef = useRef(0);
-  const wheelLockRef        = useRef(false);
-  const wheelTimeoutRef     = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const lastWheelTimeRef    = useRef(0);
+  const swipeLockedRef      = useRef(false);
+  const gestureTypeRef      = useRef<"UNKNOWN" | "SWIPE" | "RAPID_HOLD">("UNKNOWN");
 
   const hoveredIdxRef       = useRef<number | null>(null);
 
@@ -519,32 +521,57 @@ export function GamesSection() {
       if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) return;
       e.preventDefault();
 
-      if (wheelLockRef.current) return;
+      const now = Date.now();
+      const dt = now - lastWheelTimeRef.current;
+      lastWheelTimeRef.current = now;
 
-      wheelAccumulatorRef.current += e.deltaX;
-
-      const THRESHOLD = 50; 
-      
-      if (wheelAccumulatorRef.current > THRESHOLD) {
-        if (currentIndexRef.current < GAMES.length - 1) {
-          doAdvance(currentIndexRef.current + 1);
-          wheelLockRef.current = true;
-          setTimeout(() => { wheelLockRef.current = false; }, 650);
-        }
+      // Reset state on new gesture (pause > 150ms)
+      if (dt > 150) {
         wheelAccumulatorRef.current = 0;
-      } else if (wheelAccumulatorRef.current < -THRESHOLD) {
-        if (currentIndexRef.current > 0) {
-          doAdvance(currentIndexRef.current - 1);
-          wheelLockRef.current = true;
-          setTimeout(() => { wheelLockRef.current = false; }, 650);
-        }
-        wheelAccumulatorRef.current = 0;
+        swipeLockedRef.current = false;
+        gestureTypeRef.current = "UNKNOWN";
       }
 
-      clearTimeout(wheelTimeoutRef.current);
-      wheelTimeoutRef.current = setTimeout(() => {
-        wheelAccumulatorRef.current = 0;
-      }, 150);
+      const delta = e.deltaX;
+      wheelAccumulatorRef.current += delta;
+
+      // Determine gesture type kinetically
+      if (gestureTypeRef.current === "UNKNOWN") {
+        if (Math.abs(delta) > 15) {
+          gestureTypeRef.current = "SWIPE";
+        } else if (Math.abs(wheelAccumulatorRef.current) > 20) {
+          gestureTypeRef.current = "RAPID_HOLD";
+        }
+      }
+
+      // If they suddenly flick during RAPID_HOLD, convert to SWIPE and lock
+      if (gestureTypeRef.current === "RAPID_HOLD" && Math.abs(delta) > 30) {
+        gestureTypeRef.current = "SWIPE";
+        swipeLockedRef.current = true;
+      }
+
+      // Execute navigation based on physical gesture type
+      if (gestureTypeRef.current === "SWIPE") {
+        if (!swipeLockedRef.current && Math.abs(wheelAccumulatorRef.current) > 30) {
+          const direction = wheelAccumulatorRef.current > 0 ? 1 : -1;
+          const nextIdx = currentIndexRef.current + direction;
+          if (nextIdx >= 0 && nextIdx < GAMES.length) {
+            doAdvance(nextIdx);
+          }
+          swipeLockedRef.current = true; // Lock for the rest of this gesture
+        }
+      } 
+      else if (gestureTypeRef.current === "RAPID_HOLD") {
+        const RAPID_THRESHOLD = 35; // Pixels per card in scrub mode
+        if (Math.abs(wheelAccumulatorRef.current) > RAPID_THRESHOLD) {
+          const direction = wheelAccumulatorRef.current > 0 ? 1 : -1;
+          const nextIdx = currentIndexRef.current + direction;
+          if (nextIdx >= 0 && nextIdx < GAMES.length) {
+            doAdvance(nextIdx);
+          }
+          wheelAccumulatorRef.current = 0; // Reset accumulator for continuous rapid scrubbing
+        }
+      }
     };
 
     el.addEventListener("wheel", handleWheel, { passive: false });
@@ -563,7 +590,6 @@ export function GamesSection() {
       clearTimeout(advanceRef.current);
       clearTimeout(textShowRef.current);
       clearTimeout(hoverUnlockRef.current);
-      clearTimeout(wheelTimeoutRef.current);
     },
     [],
   );
@@ -644,16 +670,16 @@ export function GamesSection() {
                 animate={{ x: trackX }}
                 transition={reduced ? { duration: 0.3, ease: EASE_OUT } : CARD_SPRING}
                 onPanEnd={(e, info) => {
-                  if (wheelLockRef.current) return;
+                  if (swipeLockedRef.current) return;
                   const swipe = info.offset.x;
                   if (swipe < -40 && currentIndexRef.current < GAMES.length - 1) {
                     doAdvance(currentIndexRef.current + 1);
-                    wheelLockRef.current = true;
-                    setTimeout(() => { wheelLockRef.current = false; }, 650);
+                    swipeLockedRef.current = true;
+                    setTimeout(() => { swipeLockedRef.current = false; }, 650);
                   } else if (swipe > 40 && currentIndexRef.current > 0) {
                     doAdvance(currentIndexRef.current - 1);
-                    wheelLockRef.current = true;
-                    setTimeout(() => { wheelLockRef.current = false; }, 650);
+                    swipeLockedRef.current = true;
+                    setTimeout(() => { swipeLockedRef.current = false; }, 650);
                   }
                 }}
                 style={{
@@ -684,6 +710,9 @@ export function GamesSection() {
                       aria-roledescription="slide"
                       aria-label={`${idx + 1} / ${GAMES.length}`}
                       aria-current={isActive ? "true" : undefined}
+                      onClick={() => {
+                        if (!isActive && hasPointer) goToCard(idx);
+                      }}
                       className={cn(
                         "project-card group relative flex flex-col justify-end overflow-clip",
                         "border border-white/5 bg-[#101010]",
@@ -696,7 +725,8 @@ export function GamesSection() {
                         flexShrink:    0,
                         borderRadius:  "2rem",
                         willChange:    "transform, filter",
-                        pointerEvents: isActive ? "auto" : "none",
+                        pointerEvents: hasPointer ? "auto" : (isActive ? "auto" : "none"),
+                        cursor:        !isActive && hasPointer ? "pointer" : "default",
                       }}
                     >
                       <div

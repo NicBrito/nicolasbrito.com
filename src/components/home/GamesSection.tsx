@@ -363,6 +363,7 @@ export function GamesSection() {
   const wheelAccumulatorRef = useRef(0);
   const lastWheelTimeRef    = useRef(0);
   const swipeLockedRef      = useRef(false);
+  const hasDeceleratedRef   = useRef(false);
   const gestureTypeRef      = useRef<"UNKNOWN" | "SWIPE" | "RAPID_HOLD">("UNKNOWN");
 
   const hoveredIdxRef       = useRef<number | null>(null);
@@ -517,9 +518,23 @@ export function GamesSection() {
     if (!el) return;
 
     const handleWheel = (e: WheelEvent) => {
+      let dX = e.deltaX;
+      let dY = e.deltaY;
+
+      // Many browsers/OS combinations do not automatically map shift+wheel to deltaX
+      if (e.shiftKey && dY !== 0) {
+        dX = dY;
+        dY = 0;
+      }
+
       // Allow vertical scroll to pass through
-      if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) return;
+      if (Math.abs(dY) > Math.abs(dX)) return;
       e.preventDefault();
+
+      // Normalize physical mouse wheels (DOM_DELTA_LINE = 1, DOM_DELTA_PAGE = 2) to pixels
+      let delta = dX;
+      if (e.deltaMode === 1) delta *= 40;
+      else if (e.deltaMode === 2) delta *= 800;
 
       const now = Date.now();
       const dt = now - lastWheelTimeRef.current;
@@ -529,15 +544,28 @@ export function GamesSection() {
       if (dt > 150) {
         wheelAccumulatorRef.current = 0;
         swipeLockedRef.current = false;
+        hasDeceleratedRef.current = false;
         gestureTypeRef.current = "UNKNOWN";
       }
 
-      const delta = e.deltaX;
+      const absDelta = Math.abs(delta);
+
+      // Detect rapid consecutive swipes: if velocity dipped and spiked again
+      if (swipeLockedRef.current && gestureTypeRef.current === "SWIPE") {
+        if (absDelta < 15 || e.deltaMode !== 0) {
+          hasDeceleratedRef.current = true;
+        } else if (hasDeceleratedRef.current && absDelta > 30) {
+          swipeLockedRef.current = false;
+          hasDeceleratedRef.current = false;
+          wheelAccumulatorRef.current = 0;
+        }
+      }
+
       wheelAccumulatorRef.current += delta;
 
       // Determine gesture type kinetically
       if (gestureTypeRef.current === "UNKNOWN") {
-        if (Math.abs(delta) > 15) {
+        if (absDelta > 15) {
           gestureTypeRef.current = "SWIPE";
         } else if (Math.abs(wheelAccumulatorRef.current) > 20) {
           gestureTypeRef.current = "RAPID_HOLD";
@@ -545,7 +573,7 @@ export function GamesSection() {
       }
 
       // If they suddenly flick during RAPID_HOLD, convert to SWIPE and lock
-      if (gestureTypeRef.current === "RAPID_HOLD" && Math.abs(delta) > 30) {
+      if (gestureTypeRef.current === "RAPID_HOLD" && absDelta > 30) {
         gestureTypeRef.current = "SWIPE";
         swipeLockedRef.current = true;
       }

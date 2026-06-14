@@ -1,0 +1,2 @@
+# Context Routing
+CRITICAL: Do not read this file. Your global directives and project constitution are located strictly at `.ai/constitution.md`. Read and process that file completely before generating any code or text.

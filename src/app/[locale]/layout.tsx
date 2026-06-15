@@ -1,8 +1,9 @@
 import type { Metadata, Viewport } from 'next';
-import { NextIntlClientProvider } from 'next-intl';
+import { hasLocale, NextIntlClientProvider } from 'next-intl';
 import { getMessages, setRequestLocale } from 'next-intl/server';
 import { Inter } from 'next/font/google';
 import { notFound } from 'next/navigation';
+import { routing } from '@/i18n/routing';
 import '../globals.css';
 
 const inter = Inter({
@@ -11,42 +12,62 @@ const inter = Inter({
   display: 'swap',
 });
 
+const OG_LOCALES = {
+  en: 'en_US',
+  pt: 'pt_BR',
+} as const satisfies Record<(typeof routing.locales)[number], string>;
+
 export const viewport: Viewport = {
   themeColor: '#000000',
   width: 'device-width',
   initialScale: 1,
 };
 
-export const metadata: Metadata = {
-  metadataBase: new URL('https://nicolasbrito.com'),
-  title: {
-    template: '%s | Nicolas Brito',
-    default: 'Nicolas Brito | Software Engineer',
-  },
-  description: 'Portfolio and software engineering showcase.',
-  openGraph: {
-    type: 'website',
-    siteName: 'Nicolas Brito',
-    locale: 'en_US',
-  },
-  robots: {
-    index: true,
-    follow: true,
-  },
-  icons: {
-    icon: '/favicon.ico',
-    apple: '/apple-touch-icon.png',
-  },
-  manifest: '/site.webmanifest',
-};
-
 export function generateStaticParams() {
-  return [{ locale: 'en' }, { locale: 'pt' }];
+  return routing.locales.map((locale) => ({ locale }));
 }
 
 interface RootLayoutProps {
   children: React.ReactNode;
   params: Promise<{ locale: string }>;
+}
+
+export async function generateMetadata({
+  params,
+}: Pick<RootLayoutProps, 'params'>): Promise<Metadata> {
+  const { locale } = await params;
+  const resolvedLocale = hasLocale(routing.locales, locale)
+    ? locale
+    : routing.defaultLocale;
+
+  return {
+    metadataBase: new URL('https://nicolasbrito.com'),
+    title: {
+      template: '%s | Nicolas Brito',
+      default: 'Nicolas Brito | Software Engineer',
+    },
+    description: 'Portfolio and software engineering showcase.',
+    alternates: {
+      canonical: `/${resolvedLocale}`,
+      languages: Object.fromEntries(
+        routing.locales.map((locale) => [locale, `/${locale}`]),
+      ),
+    },
+    openGraph: {
+      type: 'website',
+      siteName: 'Nicolas Brito',
+      locale: OG_LOCALES[resolvedLocale],
+    },
+    robots: {
+      index: true,
+      follow: true,
+    },
+    icons: {
+      icon: '/favicon.ico',
+      apple: '/apple-touch-icon.png',
+    },
+    manifest: '/site.webmanifest',
+  };
 }
 
 export default async function RootLayout({
@@ -55,7 +76,7 @@ export default async function RootLayout({
 }: RootLayoutProps) {
   const { locale } = await params;
 
-  if (!['en', 'pt'].includes(locale)) {
+  if (!hasLocale(routing.locales, locale)) {
     notFound();
   }
 

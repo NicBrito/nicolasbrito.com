@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { MorphingLabel } from "@/components/ui/MorphingLabel";
 import { morphingLabelSpeed } from "@/lib/animations";
+import { useMediaQuery } from "@/lib/hooks/useMediaQuery";
 
 const SECTIONS = [
   { id: "home", key: "home" },
@@ -47,7 +48,6 @@ export function ScrollProgress() {
   const [activeSection, setActiveSection] = useState<SectionId>(DEFAULT_SECTION_ID);
   const [contentHeight, setContentHeight] = useState(0);
   const [windowHeight, setWindowHeight] = useState(0);
-  const [hasPointerDevice, setHasPointerDevice] = useState(false);
   const [isScrolling, setIsScrolling] = useState(false);
   const [isBouncing, setIsBouncing] = useState(false);
   const scrollTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -55,24 +55,8 @@ export function ScrollProgress() {
   const isScrollingRef = useRef(false);
   const isBouncingRef = useRef(false);
   const { scrollY } = useScroll();
+  const hasPointerDevice = useMediaQuery(POINTER_MEDIA_QUERY);
   const hasScrollbar = contentHeight > windowHeight;
-
-  useEffect(() => {
-    const mediaQuery = window.matchMedia(POINTER_MEDIA_QUERY);
-    const syncPointerDevice = () => {
-      setHasPointerDevice((previous) => (
-        previous === mediaQuery.matches ? previous : mediaQuery.matches
-      ));
-    };
-
-    syncPointerDevice();
-
-    mediaQuery.addEventListener("change", syncPointerDevice);
-
-    return () => {
-      mediaQuery.removeEventListener("change", syncPointerDevice);
-    };
-  }, []);
 
   const scrollbarThumbHeight = windowHeight > 0 && contentHeight > 0
     ? (windowHeight / contentHeight) * windowHeight

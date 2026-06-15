@@ -2,6 +2,7 @@
 
 import { PrimaryButton } from "@/components/ui/PrimaryButton";
 import { SecondaryButton } from "@/components/ui/SecondaryButton";
+import { NOISE_SVG } from "@/lib/assets";
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion, Variants } from "framer-motion";
 import { ImageIcon } from "lucide-react";
@@ -10,10 +11,6 @@ import Image from "next/image";
 import { ReactNode, useEffect, useLayoutEffect, useRef, useState } from "react";
 
 const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect;
-
-const ASSETS = {
-  noise: "data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='1'/%3E%3C/svg%3E",
-};
 
 const DEFAULT_CARD_VARIANTS: Variants = {
   hidden: {
@@ -107,7 +104,7 @@ export function ProjectCard({
         href={`/projects/${id}`}
         target="_self"
         rel={undefined}
-        className="rounded-full px-6 py-3 text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-[#101010]"
+        className="rounded-full px-6 py-3 text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-card"
       >
         {t("view_case")}
       </PrimaryButton>
@@ -116,7 +113,7 @@ export function ProjectCard({
         href={`/projects/${id}/demo`}
         target="_self"
         rel={undefined}
-        className="rounded-full px-6 py-3 text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-[#101010]"
+        className="rounded-full px-6 py-3 text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-card"
       >
         {t("visit_site")}
       </SecondaryButton>
@@ -143,7 +140,7 @@ export function ProjectCard({
         "project-card group relative flex flex-col justify-end overflow-clip rounded-4xl sm:rounded-[40px]",
         "xl:min-w-[22rem]",
         "border border-white/5",
-        "bg-[#101010]",
+        "bg-card",
         "shadow-sm hover:shadow-2xl focus-within:shadow-2xl transition-shadow duration-450",
         colSpan,
         className
@@ -201,7 +198,7 @@ export function ProjectCard({
 
               <div
                 className="absolute inset-0 opacity-[0.03] mix-blend-overlay pointer-events-none"
-                style={{ backgroundImage: `url("${ASSETS.noise}")` }}
+                style={{ backgroundImage: `url("${NOISE_SVG}")` }}
               />
 
               <div className="absolute inset-x-0 bottom-0 h-1/3 bg-linear-to-t from-black/10 to-transparent pointer-events-none" />

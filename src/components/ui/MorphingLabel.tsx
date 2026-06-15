@@ -40,7 +40,7 @@ export function MorphingLabel({
   layoutIdPrefix,
   animationDuration = { animate: 0.2, exit: 0.15 },
 }: MorphingLabelProps) {
-  const characters = text.split("");
+  const characters = Array.from(text);
   const letterVariants = createLetterVariants({
     animate: animationDuration.animate ?? 0.2,
     exit: animationDuration.exit ?? 0.15,

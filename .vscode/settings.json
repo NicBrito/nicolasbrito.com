@@ -1,12 +1,13 @@
 {
+  "github.copilot.chat.codeGeneration.useInstructionFiles": true,
   "github.copilot.chat.codeGeneration.instructions": [
     {
-      "file": ".ai/constitution.md"
+      "file": ".github/copilot-instructions.md"
     }
   ],
   "github.copilot.chat.testGeneration.instructions": [
     {
-      "file": ".ai/constitution.md"
+      "file": ".ai/rules/testing.md"
     }
   ]
 }

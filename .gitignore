@@ -40,5 +40,8 @@ next-env.d.ts
 .eslintcache
 
 # AI Ecosystem
-.ai/memory/
+# Shared memory (.ai/memory/shared/) is COMMITTED — versioned team knowledge.
+# Private memory is per-developer session scratch; keep the folder, ignore contents.
+.ai/memory/private/*
+!.ai/memory/private/.gitkeep
 .ai/local/

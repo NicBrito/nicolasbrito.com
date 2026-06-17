@@ -1,43 +1,60 @@
 "use client";
 
-import { NOISE_SVG } from "@/lib/assets";
-import { useMediaQuery } from "@/lib/hooks/useMediaQuery";
-import { cn } from "@/lib/utils";
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { ImageIcon } from "lucide-react";
+import { motion, useReducedMotion } from "framer-motion";
 import { useTranslations } from "next-intl";
-import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { GameCardActions } from "./games/GameCardActions";
+import { useLiveRef } from "@/lib/hooks/useLiveRef";
+import { useMediaQuery } from "@/lib/hooks/useMediaQuery";
+
+import { GameCard } from "./games/GameCard";
 import { GamesProgressControls } from "./games/GamesProgressControls";
+import { useCarouselAutoplay } from "./games/useCarouselAutoplay";
 import { useCarouselWheel } from "./games/useCarouselWheel";
 import {
   CARD_GAP,
+  CARD_PEEK_BREAKPOINT,
+  CARD_PEEK_MAX_PX,
+  CARD_PEEK_MOBILE_PX,
+  CARD_PEEK_RATIO,
   CARD_SETTLE_MS,
   CARD_SPRING,
   CARD_VARIANTS,
   CARD_VARIANTS_REDUCED,
-  CONTENT_Y_DEFAULT,
   CONTROL_H,
-  EASE_ACCEL,
-  EASE_CSS,
-  EASE_IN,
   EASE_OUT,
+  FOCUS_DELAY_MS,
+  GAME_DURATIONS,
   GAMES,
   HOVER_BLEED,
   HOVER_EXIT_MS,
   HOVER_UNLOCK_AFTER_SWAP_MS,
   INITIAL_TEXT_SHOW_MS,
+  BTN_EXIT_STAGGER_S,
+  MANUAL_HOVER_UNLOCK_MS,
+  MANUAL_TEXT_EXIT_S,
   MAX_CARD_WIDTH,
-  ORB_VARIANTS,
+  PAN_DISTANCE_PX,
+  PAN_VELOCITY_PXS,
   POINTER_QUERY,
-  TEXT_ENTER_S,
+  SWIPE_LOCK_MS,
   TEXT_EXIT_MS,
   TEXT_EXIT_S,
   TEXT_SLIDE_X,
 } from "./games/constants";
 
+type PendingFocus = { idx: number; type: "primary" | "secondary" };
+
+/**
+ * Selected Games — an autoplaying, fully navigable carousel.
+ *
+ * This component owns the carousel's *logic* only: the active index and its
+ * paging state machine (`doAdvance`), viewport/visibility observers, and the
+ * pointer / touch / wheel / keyboard input that all funnel through a single
+ * `pendingIndexRef`-aware advance. Presentation lives in `GameCard`; autoplay
+ * in `useCarouselAutoplay`; wheel gestures in `useCarouselWheel`. All tunable
+ * timings and thresholds live in `./games/constants`.
+ */
 export function GamesSection() {
   const t          = useTranslations("Games");
   const reduced    = useReducedMotion();
@@ -46,107 +63,113 @@ export function GamesSection() {
   const sectionRef   = useRef<HTMLElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const [currentIndex,   setCurrentIndex  ] = useState(0);
-  const [direction,      setDirection     ] = useState<1 | -1>(1);
-  const [textVisible,    setTextVisible   ] = useState(false);
-  const [hoveredIdx,     setHoveredIdx    ] = useState<number | null>(null);
-  const [isPlaying,      setIsPlaying     ] = useState(true);
-  const [started,        setStarted       ] = useState(false);
+  const [currentIndex,      setCurrentIndex     ] = useState(0);
+  const [direction,         setDirection        ] = useState<1 | -1>(1);
+  const [textVisible,       setTextVisible      ] = useState(false);
+  const [hoveredIdx,        setHoveredIdx       ] = useState<number | null>(null);
+  const [isPlaying,         setIsPlaying        ] = useState(true);
+  const [started,           setStarted          ] = useState(false);
   const [isInView,          setIsInView         ] = useState(false);
   const [isControlsVisible, setIsControlsVisible] = useState(false);
   const [containerWidth,    setContainerWidth   ] = useState(0);
   const [isHoverLocked,     setIsHoverLocked    ] = useState(false);
   const [isKeyboardFocused, setIsKeyboardFocused] = useState(false);
+  // Pointer is over the action buttons (not merely the card) — autoplay pauses
+  // here so an action never slides away from under a click.
+  const [buttonsHovered,    setButtonsHovered   ] = useState(false);
+  // Whether the *next* exit should use the larger/longer manual values. Defaults
+  // true (manual is the common move); only autoplay flips it false for its staged
+  // exit. It must already hold the manual value on the last render a card is
+  // present, because AnimatePresence freezes a child's exit prop at removal.
+  const [immediateExit,     setImmediateExit    ] = useState(true);
 
-  const rafRef          = useRef(0);
-  const timerActiveRef  = useRef(false);
-  const progressRef     = useRef(0);
-  const currentIndexRef = useRef(0);
-  const fillRef         = useRef<HTMLDivElement | null>(null);
-  const advanceRef      = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-  const textShowRef     = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-  const hoverUnlockRef  = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  // 0–1 autoplay progress and the active dot's fill, both written imperatively.
+  const progressRef    = useRef(0);
+  const fillRef        = useRef<HTMLDivElement | null>(null);
+  const textShowRef    = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const hoverUnlockRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
-  const swipeLockedRef      = useRef(false);
+  // Timers for the staged exit choreography (used only by autoplay advances).
+  const textHideRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const swapRef     = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
-  const primaryBtnRefs      = useRef<(HTMLAnchorElement | null)[]>([]);
-  const secondaryBtnRefs    = useRef<(HTMLAnchorElement | null)[]>([]);
+  // When a manual swap starts and the outgoing card had pointer hover active,
+  // we keep track of its index so GameCard can hold the buttons at opacity:1,y:0
+  // through the exit delay (instead of letting them retract mid-slide).
+  const [exitingHoverIdx,  setExitingHoverIdx ] = useState<number | null>(null);
+  const exitHoverClearRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
-  const hoveredIdxRef       = useRef<number | null>(null);
-  const pendingFocusRef     = useRef<{ idx: number; type: "primary" | "secondary" } | null>(null);
-  const isMouseDownRef      = useRef(false);
-  const isKeyboardFocusedRef = useRef(false);
+  // The wheel hook owns this lock; the pan handler has its own below. They never
+  // co-occur (trackpad/mouse = wheel, touch = pan), and keeping them separate
+  // stops one handler's timer from flipping the other's lock.
+  const swipeLockedRef = useRef(false);
+  const panLockedRef   = useRef(false);
+  const panUnlockRef   = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  // In-flight target index, so rapid consecutive inputs chain from the pending
+  // destination rather than the index React has committed so far.
+  const pendingIndexRef = useRef(0);
 
+  const primaryBtnRefs   = useRef<(HTMLAnchorElement | null)[]>([]);
+  const secondaryBtnRefs = useRef<(HTMLAnchorElement | null)[]>([]);
+  const pendingFocusRef  = useRef<PendingFocus | null>(null);
+  const isMouseDownRef   = useRef(false);
+
+  // Latest reactive values mirrored for imperative reads (handlers, RAF loop).
+  const currentIndexRef      = useLiveRef(currentIndex);
+  const isKeyboardFocusedRef = useLiveRef(isKeyboardFocused);
+  const hoveredIdxRef        = useLiveRef(hoveredIdx);
+  const isHoverLockedRef     = useLiveRef(isHoverLocked);
+
+  // Lets the autoplay loop reach the latest `doAdvance` without re-arming.
+  const doAdvanceRef = useRef<(nextIndex: number, staged?: boolean) => void>(() => {});
+
+  // Distinguish keyboard focus (pause + reveal actions) from a click landing on
+  // a focusable element, which must NOT trigger keyboard mode.
   useEffect(() => {
-    isKeyboardFocusedRef.current = isKeyboardFocused;
-  }, [isKeyboardFocused]);
-
-  useEffect(() => {
-    const handleMouseDown = () => { isMouseDownRef.current = true; };
-    const handleMouseUp = () => { isMouseDownRef.current = false; };
-    // also handle touch
-    const handleTouchStart = () => { isMouseDownRef.current = true; };
-    const handleTouchEnd = () => { isMouseDownRef.current = false; };
-
-    document.addEventListener("mousedown", handleMouseDown, { passive: true });
-    document.addEventListener("mouseup", handleMouseUp, { passive: true });
-    document.addEventListener("touchstart", handleTouchStart, { passive: true });
-    document.addEventListener("touchend", handleTouchEnd, { passive: true });
+    const down = () => { isMouseDownRef.current = true; };
+    const up   = () => { isMouseDownRef.current = false; };
+    document.addEventListener("mousedown",  down, { passive: true });
+    document.addEventListener("mouseup",    up,   { passive: true });
+    document.addEventListener("touchstart", down, { passive: true });
+    document.addEventListener("touchend",   up,   { passive: true });
     return () => {
-      document.removeEventListener("mousedown", handleMouseDown);
-      document.removeEventListener("mouseup", handleMouseUp);
-      document.removeEventListener("touchstart", handleTouchStart);
-      document.removeEventListener("touchend", handleTouchEnd);
+      document.removeEventListener("mousedown",  down);
+      document.removeEventListener("mouseup",    up);
+      document.removeEventListener("touchstart", down);
+      document.removeEventListener("touchend",   up);
     };
   }, []);
 
+  // Move keyboard focus onto the destination card's action the instant that card
+  // becomes active — its button is already mounted (active cards always render
+  // their actions) — rather than waiting for the card to settle. Otherwise the
+  // outgoing card's button unmounts mid-entry, focus falls to <body>, and arrow
+  // keys stop paging until things settle. `preventScroll` keeps the centered
+  // card from nudging the viewport.
   useEffect(() => {
-    if (textVisible && !isHoverLocked && pendingFocusRef.current !== null) {
-      setTimeout(() => {
-        const focusData = pendingFocusRef.current;
-        if (!focusData) return;
-        const { idx, type } = focusData;
-        if (type === "primary") {
-          primaryBtnRefs.current[idx]?.focus();
-        } else {
-          secondaryBtnRefs.current[idx]?.focus();
-        }
-        pendingFocusRef.current = null;
-      }, 50);
-    }
-  }, [textVisible, isHoverLocked]);
-
-  useEffect(() => {
-    hoveredIdxRef.current = hoveredIdx;
-  }, [hoveredIdx]);
-
-  useEffect(() => {
-    currentIndexRef.current = currentIndex;
+    const focus = pendingFocusRef.current;
+    if (!focus) return;
+    const refs = focus.type === "primary" ? primaryBtnRefs : secondaryBtnRefs;
+    refs.current[focus.idx]?.focus({ preventScroll: true });
+    pendingFocusRef.current = null;
   }, [currentIndex]);
 
+  // Track the container width to size cards and centre the active one.
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
-    const ro = new ResizeObserver(([entry]) =>
-      setContainerWidth(entry.contentRect.width),
-    );
+    const ro = new ResizeObserver(([entry]) => setContainerWidth(entry.contentRect.width));
     ro.observe(el);
     return () => ro.disconnect();
   }, []);
 
   const getCardWidth = (width: number) => {
     if (width === 0) return 0;
-
-    // Dynamic peek scaling from 24px on mobile up to 120px on desktop
-    let dynamicPeek = 24;
-    if (width >= 640) {
-      dynamicPeek = Math.min(width * 0.08, 120);
-    }
-
-    let w = width - 2 * dynamicPeek;
-    if (w > MAX_CARD_WIDTH) w = MAX_CARD_WIDTH;
-
-    return w;
+    const peek =
+      width >= CARD_PEEK_BREAKPOINT
+        ? Math.min(width * CARD_PEEK_RATIO, CARD_PEEK_MAX_PX)
+        : CARD_PEEK_MOBILE_PX;
+    return Math.min(width - 2 * peek, MAX_CARD_WIDTH);
   };
 
   const cardWidth = getCardWidth(containerWidth);
@@ -154,6 +177,7 @@ export function GamesSection() {
     ? (containerWidth - cardWidth) / 2 - currentIndex * (cardWidth + CARD_GAP)
     : 0;
 
+  // Start the section and keep controls pinned once it has been scrolled past.
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
@@ -162,17 +186,7 @@ export function GamesSection() {
         const visible = entry.isIntersecting;
         setIsInView(visible);
         if (visible && !started) setStarted(true);
-
-        if (visible) {
-          setIsControlsVisible(true);
-        } else {
-
-          if (entry.boundingClientRect.top < 0) {
-            setIsControlsVisible(true);
-          } else {
-            setIsControlsVisible(false);
-          }
-        }
+        setIsControlsVisible(visible || entry.boundingClientRect.top < 0);
       },
       { threshold: 0.5 },
     );
@@ -186,201 +200,207 @@ export function GamesSection() {
     return () => clearTimeout(id);
   }, [started]);
 
-  const stopTimer = useCallback(() => {
-    timerActiveRef.current = false;
-    cancelAnimationFrame(rafRef.current);
-  }, []);
-
-  const doAdvance = useCallback(
-    (nextIndex: number) => {
-      clearTimeout(advanceRef.current);
-      clearTimeout(textShowRef.current);
-      clearTimeout(hoverUnlockRef.current);
-      stopTimer();
-
-      const resolvedDir: 1 | -1 = nextIndex > currentIndexRef.current ? 1 : -1;
-
-      setDirection(resolvedDir);
-      progressRef.current = 0;
-
-      setIsHoverLocked(true);
-
-      advanceRef.current = setTimeout(() => {
-        setTextVisible(false);
-
-        const swapDelay = TEXT_EXIT_MS - HOVER_EXIT_MS;
-        const swapTimer = setTimeout(() => {
-          setCurrentIndex(nextIndex);
-          textShowRef.current = setTimeout(
-            () => setTextVisible(true),
-            CARD_SETTLE_MS,
-          );
-
-          hoverUnlockRef.current = setTimeout(
-            () => setIsHoverLocked(false),
-            HOVER_UNLOCK_AFTER_SWAP_MS,
-          );
-        }, swapDelay);
-
-        advanceRef.current = swapTimer;
-      }, HOVER_EXIT_MS);
-    },
-    [stopTimer],
-  );
-
-  const startProgressTimer = useCallback(() => {
-    const t0          = performance.now();
-    const dur         = GAMES[currentIndexRef.current].displayDuration;
-    const p0          = progressRef.current;
-    const remaining   = 1 - p0;
-    const remainingMs = remaining * dur;
-
-    if (remainingMs <= 0) {
-      const nextIdx = (currentIndexRef.current + 1) % GAMES.length;
-      if (isKeyboardFocusedRef.current) {
-        pendingFocusRef.current = { idx: nextIdx, type: "primary" };
-      }
-      doAdvance(nextIdx);
-      return;
+  // Autoplay completion: queue focus when keyboard-driven, then advance with the
+  // staged choreography (the elegant, leisurely exit belongs to autoplay).
+  const onAutoplayComplete = useCallback((nextIndex: number) => {
+    if (isKeyboardFocusedRef.current) {
+      pendingFocusRef.current = { idx: nextIndex, type: "primary" };
     }
+    doAdvanceRef.current(nextIndex, true);
+  }, [isKeyboardFocusedRef]);
 
-    timerActiveRef.current = true;
+  // Autoplay runs only while the section is on screen and uninterrupted. Per the
+  // WAI-ARIA carousel pattern it pauses on keyboard focus (which flips isPlaying)
+  // and on pointer hover — but specifically hover over the *actions*, not the
+  // card, so that hovering the card still lets a slide auto-advance (and play its
+  // staged hover-exit) while a button never slides away under a click. Progress
+  // is preserved across pauses.
+  const { stop: stopAutoplay } = useCarouselAutoplay({
+    enabled: textVisible && isPlaying && isInView && !buttonsHovered,
+    durations: GAME_DURATIONS,
+    currentIndex,
+    currentIndexRef,
+    progressRef,
+    fillRef,
+    onComplete: onAutoplayComplete,
+  });
 
-    const tick = (now: number) => {
-      if (!timerActiveRef.current) return;
-      const elapsed = now - t0;
-      const p = p0 + (elapsed / remainingMs) * remaining;
+  // The single entry point for every navigation.
+  //
+  // `staged` (autoplay) plays the leisurely exit: the outgoing card finishes
+  // leaving before being replaced — hover lifts off (actions retract, content
+  // lowers, card shrinks), the text slides out, and only then does the track
+  // advance. A manual move (keyboard / wheel / touch / click) is *immediate*:
+  // text and actions slide out together in the travel direction (actions trailing
+  // a hair behind the text) while the next card slides in — so navigation stays
+  // alive and snappy even mid-entry. `pendingIndexRef` updates synchronously so
+  // bursts page one card each.
+  const doAdvance = useCallback((nextIndex: number, staged = false) => {
+    stopAutoplay();
+    clearTimeout(textHideRef.current);
+    clearTimeout(swapRef.current);
+    clearTimeout(textShowRef.current);
+    clearTimeout(hoverUnlockRef.current);
 
-      if (p >= 1) {
-        timerActiveRef.current = false;
-        const nextIdx = (currentIndexRef.current + 1) % GAMES.length;
-        if (isKeyboardFocusedRef.current) {
-          pendingFocusRef.current = { idx: nextIdx, type: "primary" };
-        }
-        doAdvance(nextIdx);
-        return;
+    setButtonsHovered(false);
+    setImmediateExit(!staged);
+    setDirection(nextIndex > pendingIndexRef.current ? 1 : -1);
+    pendingIndexRef.current = nextIndex;
+    progressRef.current = 0;
+    setIsHoverLocked(true);
+
+    // The swap itself, plus the after-swap text reveal and hover release.
+    const commit = () => {
+      swapRef.current = undefined;
+      setCurrentIndex(nextIndex);
+      setImmediateExit(true); // restore the manual default for the next move
+      if (staged) {
+        // Staged: text was already hidden; reveal it after the new card settles.
+        textShowRef.current    = setTimeout(() => setTextVisible(true), CARD_SETTLE_MS);
+        hoverUnlockRef.current = setTimeout(() => setIsHoverLocked(false), HOVER_UNLOCK_AFTER_SWAP_MS);
+      } else {
+        // Manual: text is already visible (incoming card shows it immediately).
+        // Hover re-enables after the spring animation settles (~300ms).
+        hoverUnlockRef.current = setTimeout(() => setIsHoverLocked(false), MANUAL_HOVER_UNLOCK_MS);
       }
-
-      progressRef.current = p;
-      if (fillRef.current) fillRef.current.style.width = `${p * 100}%`;
-      rafRef.current = requestAnimationFrame(tick);
     };
 
-    rafRef.current = requestAnimationFrame(tick);
-  }, [doAdvance]);
+    if (staged) {
+      textHideRef.current = setTimeout(() => setTextVisible(false), HOVER_EXIT_MS);
+      swapRef.current     = setTimeout(commit, TEXT_EXIT_MS);
+    } else {
+      // Capture hover state BEFORE any state updates: if the outgoing card had
+      // pointer hover active, its buttons were visible (opacity:1,y:0). We mark
+      // it so GameCard can hold that state through the exit delay — otherwise
+      // isHoverActive goes false in the same render, Framer captures the retract
+      // animate target, and the buttons visibly slide down mid-transition.
+      const exitingIdx     = currentIndexRef.current;
+      const hoverWasActive =
+        hoveredIdxRef.current === exitingIdx &&
+        !isHoverLockedRef.current;
+      clearTimeout(exitHoverClearRef.current);
+      setExitingHoverIdx(hoverWasActive ? exitingIdx : null);
+      if (hoverWasActive) {
+        exitHoverClearRef.current = setTimeout(
+          () => setExitingHoverIdx(null),
+          Math.round((MANUAL_TEXT_EXIT_S + BTN_EXIT_STAGGER_S) * 1000) + 50,
+        );
+      }
+
+      // Keep textVisible=true: the outgoing card's text rides off-screen with it
+      // (exit is delayed until the spring settles), and the incoming card's text
+      // enters immediately. No 650 ms blank period.
+      setTextVisible(true);
+      commit();
+    }
+  }, [stopAutoplay, currentIndexRef, hoveredIdxRef, isHoverLockedRef]);
+
+  // Keep the autoplay loop pointed at the latest advance without re-arming it.
+  useEffect(() => { doAdvanceRef.current = doAdvance; }, [doAdvance]);
 
   useCarouselWheel({
     containerRef,
     itemCount: GAMES.length,
-    currentIndexRef,
+    pendingIndexRef,
     swipeLockedRef,
     onNavigate: doAdvance,
   });
 
-  useEffect(() => {
-    if (!textVisible || !isPlaying || !isInView) { stopTimer(); return; }
-    startProgressTimer();
-    return () => stopTimer();
-  }, [textVisible, isPlaying, isInView, startProgressTimer, stopTimer]);
-
-  useEffect(
-    () => () => {
-      cancelAnimationFrame(rafRef.current);
-      clearTimeout(advanceRef.current);
-      clearTimeout(textShowRef.current);
-      clearTimeout(hoverUnlockRef.current);
-    },
-    [],
-  );
+  useEffect(() => () => {
+    clearTimeout(textHideRef.current);
+    clearTimeout(swapRef.current);
+    clearTimeout(textShowRef.current);
+    clearTimeout(hoverUnlockRef.current);
+    clearTimeout(panUnlockRef.current);
+    clearTimeout(exitHoverClearRef.current);
+  }, []);
 
   const togglePlay = useCallback(() => {
-    if (isPlaying) stopTimer();
+    stopAutoplay();
     setIsPlaying((prev) => !prev);
-  }, [isPlaying, stopTimer]);
+  }, [stopAutoplay]);
 
-  const goToCard = useCallback(
-    (index: number) => {
-      if (index === currentIndexRef.current) return;
-      doAdvance(index);
-    },
-    [doAdvance],
-  );
+  const goToCard = useCallback((index: number) => {
+    if (index !== pendingIndexRef.current) doAdvance(index);
+  }, [doAdvance]);
 
   const handleFocusPrimaryBtn = useCallback((idx?: number) => {
     const targetIdx = idx ?? currentIndexRef.current;
     if (targetIdx === currentIndexRef.current) {
-      setTimeout(() => primaryBtnRefs.current[targetIdx]?.focus(), 50);
+      setTimeout(() => primaryBtnRefs.current[targetIdx]?.focus(), FOCUS_DELAY_MS);
     } else {
       pendingFocusRef.current = { idx: targetIdx, type: "primary" };
     }
-  }, []);
+  }, [currentIndexRef]);
 
   const handleAdvanceNextAndFocus = useCallback(() => {
-    if (currentIndexRef.current < GAMES.length - 1) {
-      const nextIdx = currentIndexRef.current + 1;
-      pendingFocusRef.current = { idx: nextIdx, type: "primary" };
-      doAdvance(nextIdx);
+    const pending = pendingIndexRef.current;
+    if (pending < GAMES.length - 1) {
+      pendingFocusRef.current = { idx: pending + 1, type: "primary" };
+      doAdvance(pending + 1);
     }
   }, [doAdvance]);
 
-  const handlePrimaryKeyDown = useCallback((e: React.KeyboardEvent, idx: number) => {
-    if (e.key === "Tab" && e.shiftKey) {
-      if (idx > 0) {
-        e.preventDefault();
-        pendingFocusRef.current = { idx: idx - 1, type: "secondary" };
-        doAdvance(idx - 1);
-      }
-    } else if (e.key === "ArrowRight") {
+  // Shared arrow-key paging for the action buttons; both chain from the pending
+  // index so a burst of presses pages one card per press without freezing.
+  const pageByArrows = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === "ArrowRight") {
       e.preventDefault();
-      if (idx < GAMES.length - 1) {
-        pendingFocusRef.current = { idx: idx + 1, type: "primary" };
-        doAdvance(idx + 1);
+      const pending = pendingIndexRef.current;
+      if (pending < GAMES.length - 1) {
+        pendingFocusRef.current = { idx: pending + 1, type: "primary" };
+        doAdvance(pending + 1);
       }
-    } else if (e.key === "ArrowLeft") {
+      return true;
+    }
+    if (e.key === "ArrowLeft") {
       e.preventDefault();
-      if (idx > 0) {
-        pendingFocusRef.current = { idx: idx - 1, type: "primary" };
-        doAdvance(idx - 1);
+      const pending = pendingIndexRef.current;
+      if (pending > 0) {
+        pendingFocusRef.current = { idx: pending - 1, type: "primary" };
+        doAdvance(pending - 1);
       }
-    } else if (e.key === " ") {
+      return true;
+    }
+    if (e.key === " ") {
       e.preventDefault();
       togglePlay();
-    } else if (e.key === "ArrowDown") {
+      return true;
+    }
+    if (e.key === "ArrowDown") {
       e.preventDefault();
       document.getElementById("game-dot-0")?.focus();
+      return true;
     }
+    return false;
   }, [doAdvance, togglePlay]);
+
+  const handlePrimaryKeyDown = useCallback((e: React.KeyboardEvent, idx: number) => {
+    if (e.key === "Tab" && e.shiftKey && idx > 0) {
+      e.preventDefault();
+      pendingFocusRef.current = { idx: idx - 1, type: "secondary" };
+      doAdvance(idx - 1);
+      return;
+    }
+    pageByArrows(e);
+  }, [doAdvance, pageByArrows]);
 
   const handleSecondaryKeyDown = useCallback((e: React.KeyboardEvent, idx: number) => {
-    if (e.key === "Tab" && !e.shiftKey) {
-      if (idx < GAMES.length - 1) {
-        e.preventDefault();
-        pendingFocusRef.current = { idx: idx + 1, type: "primary" };
-        doAdvance(idx + 1);
-      }
-    } else if (e.key === "ArrowRight") {
+    if (e.key === "Tab" && !e.shiftKey && idx < GAMES.length - 1) {
       e.preventDefault();
-      if (idx < GAMES.length - 1) {
-        pendingFocusRef.current = { idx: idx + 1, type: "primary" };
-        doAdvance(idx + 1);
-      }
-    } else if (e.key === "ArrowLeft") {
-      e.preventDefault();
-      if (idx > 0) {
-        pendingFocusRef.current = { idx: idx - 1, type: "primary" };
-        doAdvance(idx - 1);
-      }
-    } else if (e.key === " ") {
-      e.preventDefault();
-      togglePlay();
-    } else if (e.key === "ArrowDown") {
-      e.preventDefault();
-      document.getElementById("game-dot-0")?.focus();
+      pendingFocusRef.current = { idx: idx + 1, type: "primary" };
+      doAdvance(idx + 1);
+      return;
     }
-  }, [doAdvance, togglePlay]);
+    pageByArrows(e);
+  }, [doAdvance, pageByArrows]);
 
-  const enterX = direction === 1 ?  TEXT_SLIDE_X : -TEXT_SLIDE_X;
-  const exitX  = direction === 1 ? -TEXT_SLIDE_X :  TEXT_SLIDE_X;
+  const enterX = direction === 1 ? TEXT_SLIDE_X : -TEXT_SLIDE_X;
+  // Both manual and staged exits slide in the carousel direction; manual is
+  // faster. Buttons trail the text by BTN_EXIT_STAGGER_S on manual swaps only.
+  const exitDuration  = immediateExit ? MANUAL_TEXT_EXIT_S : TEXT_EXIT_S;
+  const btnsExitDelay = immediateExit ? BTN_EXIT_STAGGER_S : 0;
+  const exitX         = direction === 1 ? -TEXT_SLIDE_X : TEXT_SLIDE_X;
 
   const headingV = reduced
     ? { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { duration: 0.25 } } }
@@ -397,11 +417,9 @@ export function GamesSection() {
       id="games"
       aria-labelledby="games-section-title"
       onFocusCapture={() => {
-        if (!isMouseDownRef.current) {
-          if (!isKeyboardFocused) {
-            setIsKeyboardFocused(true);
-            setIsPlaying(false);
-          }
+        if (!isMouseDownRef.current && !isKeyboardFocused) {
+          setIsKeyboardFocused(true);
+          setIsPlaying(false);
         }
       }}
       onBlurCapture={(e) => {
@@ -411,9 +429,7 @@ export function GamesSection() {
         }
       }}
       className="relative w-full bg-background pt-[clamp(4rem,8vw,8rem)]"
-      style={{
-        paddingBottom: `calc(6rem + ${CONTROL_H})`,
-      }}
+      style={{ paddingBottom: `calc(6rem + ${CONTROL_H})` }}
     >
       <div className="mx-auto w-full max-w-7xl px-[clamp(1rem,3vw,2rem)]">
         <motion.div
@@ -433,283 +449,100 @@ export function GamesSection() {
         </motion.div>
       </div>
 
-      <motion.div
-        initial={{ opacity: 0, y: 28 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, margin: "-30px" }}
-        transition={{ duration: 0.82, ease: EASE_OUT }}
+      <div
+        className="w-full overflow-hidden"
+        style={{ paddingTop: HOVER_BLEED, paddingBottom: HOVER_BLEED }}
       >
         <div
-          className="w-full overflow-hidden"
-          style={{ paddingTop: HOVER_BLEED, paddingBottom: HOVER_BLEED }}
+          ref={containerRef}
+          className="w-full overflow-visible"
+          style={{ marginTop: -HOVER_BLEED, marginBottom: -HOVER_BLEED }}
+          role="region"
+          aria-roledescription="carousel"
+          aria-label={t("section_title")}
         >
-          <div
-            ref={containerRef}
-            className="w-full overflow-visible"
-            style={{ marginTop: -HOVER_BLEED, marginBottom: -HOVER_BLEED }}
-            role="region"
-            aria-roledescription="carousel"
-            aria-label={t("section_title")}
-          >
-            {containerWidth > 0 && (
-              <motion.div
-                animate={{ x: trackX }}
-                transition={reduced ? { duration: 0.3, ease: EASE_OUT } : CARD_SPRING}
-                onPanEnd={(e, info) => {
-                  if (swipeLockedRef.current) return;
-                  const swipe = info.offset.x;
-                  if (swipe < -40 && currentIndexRef.current < GAMES.length - 1) {
-                    doAdvance(currentIndexRef.current + 1);
-                    swipeLockedRef.current = true;
-                    setTimeout(() => { swipeLockedRef.current = false; }, 650);
-                  } else if (swipe > 40 && currentIndexRef.current > 0) {
-                    doAdvance(currentIndexRef.current - 1);
-                    swipeLockedRef.current = true;
-                    setTimeout(() => { swipeLockedRef.current = false; }, 650);
-                  }
-                }}
-                style={{
-                  display:       "flex",
-                  gap:           CARD_GAP,
-                  height:        "clamp(24rem, 65vh, 48rem)",
-                  willChange:    "transform",
-                  paddingTop:    HOVER_BLEED,
-                  paddingBottom: HOVER_BLEED,
-                  touchAction:   "pan-y",
-                }}
-              >
-                {GAMES.map((game, idx) => {
-                  const isActive = idx === currentIndex;
-                  const hasImage = !!game.image;
+          {containerWidth > 0 && (
+            <motion.div
+              initial={{ x: trackX }}
+              animate={{ x: trackX }}
+              transition={reduced ? { duration: 0.3, ease: EASE_OUT } : CARD_SPRING}
+              onPanEnd={(_, info) => {
+                if (panLockedRef.current) return;
+                const dx = info.offset.x;
+                const vx = info.velocity.x;
+                const wantsNext = dx < -PAN_DISTANCE_PX || vx < -PAN_VELOCITY_PXS;
+                const wantsPrev = dx >  PAN_DISTANCE_PX || vx >  PAN_VELOCITY_PXS;
+                const pending = pendingIndexRef.current;
+                const target =
+                  wantsNext && pending < GAMES.length - 1 ? pending + 1 :
+                  wantsPrev && pending > 0                 ? pending - 1 :
+                  null;
+                if (target === null) return;
+                doAdvance(target);
+                panLockedRef.current = true;
+                clearTimeout(panUnlockRef.current);
+                panUnlockRef.current = setTimeout(() => { panLockedRef.current = false; }, SWIPE_LOCK_MS);
+              }}
+              style={{
+                display:       "flex",
+                gap:           CARD_GAP,
+                height:        "clamp(24rem, 65vh, 48rem)",
+                willChange:    "transform",
+                paddingTop:    HOVER_BLEED,
+                paddingBottom: HOVER_BLEED,
+                touchAction:   "pan-y",
+              }}
+            >
+              {GAMES.map((game, idx) => {
+                const isActive = idx === currentIndex;
+                const isHoverActive =
+                  !isHoverLocked &&
+                  isActive &&
+                  ((hasPointer && hoveredIdx === idx) || isKeyboardFocused);
 
-                  const isHoverActive =
-                    !isHoverLocked && isActive && ((hasPointer && hoveredIdx === idx) || isKeyboardFocused);
-
-                  return (
-                    <motion.div
-                      key={game.id}
-                      variants={cardV}
-                      animate={isHoverActive ? "hover" : undefined}
-                      onHoverStart={() => hasPointer && setHoveredIdx(idx)}
-                      onHoverEnd={()   => hasPointer && setHoveredIdx(null)}
-                      role="group"
-                      aria-roledescription="slide"
-                      aria-label={`${idx + 1} / ${GAMES.length}`}
-                      aria-current={isActive ? "true" : undefined}
-                      onClick={() => {
-                        if (!isActive && hasPointer) goToCard(idx);
-                      }}
-                      className={cn(
-                        "project-card group relative flex flex-col justify-end overflow-clip",
-                        "border border-white/5 bg-card",
-                        "shadow-sm transition-shadow duration-500",
-                        isHoverActive && "shadow-2xl",
-                      )}
-                      style={{
-                        width:         cardWidth,
-                        height:        "100%",
-                        flexShrink:    0,
-                        borderRadius:  "2rem",
-                        willChange:    "transform, filter",
-                        pointerEvents: hasPointer ? "auto" : (isActive ? "auto" : "none"),
-                        cursor:        !isActive && hasPointer ? "pointer" : "default",
-                      }}
-                    >
-                      <div
-                        className="absolute inset-0 z-0 overflow-clip transform-gpu"
-                        style={{ transform: "translate3d(0,0,0)" }}
-                      >
-                        <motion.div
-                          initial="hidden"
-                          animate="visible"
-                          className="absolute inset-0 w-full h-full z-0"
-                        >
-                          <motion.div variants={ORB_VARIANTS} custom={0.1} className="absolute inset-0">
-                            <div
-                              className={cn(
-                                "absolute -top-[10%] -left-[10%] w-[70%] h-[70%] rounded-full blur-[140px] opacity-15",
-                                "transform-gpu will-change-transform",
-                                game.colors.from,
-                              )}
-                            />
-                          </motion.div>
-
-                          <motion.div variants={ORB_VARIANTS} custom={0.3} className="absolute inset-0">
-                            <div
-                              className={cn(
-                                "absolute bottom-0 -right-[10%] w-[60%] h-[60%] rounded-full blur-[120px] opacity-15",
-                                "transform-gpu will-change-transform",
-                                game.colors.to,
-                              )}
-                            />
-                          </motion.div>
-
-                          {!hasImage && (
-                            <motion.div
-                              initial={{ opacity: 0 }}
-                              animate={{ opacity: 1 }}
-                              transition={{ delay: 0.5, duration: 1 }}
-                              className="absolute inset-0 flex items-center justify-center pointer-events-none"
-                            >
-                              <motion.div
-                                animate={isHoverActive ? { scale: 0.85 } : { scale: 0.8 }}
-                                transition={{ duration: 0.30, ease: EASE_CSS }}
-                                className="opacity-[0.05]"
-                              >
-                                <ImageIcon size={200} strokeWidth={0.5} />
-                              </motion.div>
-                            </motion.div>
-                          )}
-
-                          <div
-                            className="absolute inset-0 opacity-[0.03] mix-blend-overlay pointer-events-none"
-                            style={{ backgroundImage: `url("${NOISE_SVG}")` }}
-                          />
-                          <div className="absolute inset-x-0 bottom-0 h-1/3 bg-linear-to-t from-black/10 to-transparent pointer-events-none" />
-                        </motion.div>
-
-                        {hasImage && (
-                          <motion.div
-                            className="absolute inset-0 w-full h-full z-10"
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            transition={{ duration: 0.5, ease: "easeOut" }}
-                          >
-                            <Image
-                              src={game.image!}
-                              alt={t(`items.${game.id}.title`)}
-                              fill
-                              className="object-cover"
-                              sizes="(max-width: 768px) 100vw, 80vw"
-                            />
-                            <div
-                              className="absolute inset-x-0 bottom-0 h-[60%] pointer-events-none z-20"
-                              style={{
-                                backdropFilter:       "blur(24px)",
-                                WebkitBackdropFilter: "blur(24px)",
-                                maskImage:            "linear-gradient(to top, black 50%, transparent 100%)",
-                                WebkitMaskImage:      "linear-gradient(to top, black 50%, transparent 100%)",
-                              }}
-                            />
-                            <div className="absolute inset-x-0 bottom-0 h-[60%] bg-linear-to-t from-black/80 via-black/20 to-transparent pointer-events-none z-20 opacity-90" />
-                          </motion.div>
-                        )}
-                      </div>
-
-                      <motion.div
-                        className="relative z-30 flex flex-col p-8 md:p-12"
-                        animate={{
-                          y: hasPointer && !isHoverActive ? CONTENT_Y_DEFAULT : 0,
-                        }}
-                        transition={{
-                          y: { duration: 0.30, ease: EASE_CSS },
-                        }}
-                      >
-                        <AnimatePresence>
-                          {isActive && textVisible && (
-                            <motion.div
-                              key={`text-${game.id}`}
-                              initial={{ opacity: 0, x: reduced ? 0 : enterX }}
-                              animate={{ opacity: 1, x: 0 }}
-                              exit={{
-                                opacity: 0,
-                                x:       reduced ? 0 : exitX,
-                                transition: { duration: TEXT_EXIT_S, ease: EASE_IN },
-                              }}
-                              transition={{
-                                x:       { duration: TEXT_ENTER_S, ease: EASE_OUT },
-                                opacity: { duration: TEXT_ENTER_S * 0.7, ease: "easeOut" },
-                              }}
-                            >
-                              <h3 className="mb-2 sm:mb-3 text-2xl sm:text-3xl font-bold text-white tracking-tight drop-shadow-lg leading-tight">
-                                {t(`items.${game.id}.title`)}
-                              </h3>
-                              <p className="text-base sm:text-lg text-white/90 font-medium leading-relaxed max-w-lg line-clamp-2 drop-shadow-md">
-                                {t(`items.${game.id}.description`)}
-                              </p>
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
-
-                        <AnimatePresence>
-                          {hasPointer ? (
-                            isActive && (
-                              <motion.div
-                                key={`btns-ptr-${game.id}`}
-                                initial={{ opacity: 0, y: 8 }}
-                                animate={isHoverActive && textVisible
-                                  ? { opacity: 1, y: 0 }
-                                  : { opacity: 0, y: 8 }
-                                }
-                                exit={{ opacity: 0, y: 8, transition: { duration: TEXT_EXIT_S } }}
-                                transition={isHoverActive && textVisible
-                                  ? { duration: 0.30, ease: EASE_CSS, delay: 0.04 }
-                                  : { duration: 0.22, ease: EASE_ACCEL }
-                                }
-                                className="mt-[clamp(0.75rem,2vw,1.25rem)] flex flex-row flex-wrap items-center gap-[clamp(0.5rem,1.5vw,0.75rem)]"
-                                style={{ pointerEvents: isHoverActive && textVisible ? "auto" : "none" }}
-                              >
-                                <GameCardActions
-                                  gameId={game.id}
-                                  isActive={isActive}
-                                  viewLabel={t("view_game")}
-                                  playLabel={t("play_now")}
-                                  registerPrimary={(el) => { primaryBtnRefs.current[idx] = el as HTMLAnchorElement | null; }}
-                                  registerSecondary={(el) => { secondaryBtnRefs.current[idx] = el as HTMLAnchorElement | null; }}
-                                  onPrimaryKeyDown={(e) => handlePrimaryKeyDown(e, idx)}
-                                  onSecondaryKeyDown={(e) => handleSecondaryKeyDown(e, idx)}
-                                />
-                              </motion.div>
-                            )
-                          ) : (
-                            isActive && textVisible && (
-                              <motion.div
-                                key={`btns-touch-${game.id}`}
-                                initial={{ opacity: 0, x: reduced ? 0 : enterX }}
-                                animate={{
-                                  opacity: 1,
-                                  x:       0,
-                                  transition: {
-                                    delay:    0.18,
-                                    duration: TEXT_ENTER_S,
-                                    ease:     EASE_OUT,
-                                  },
-                                }}
-                                exit={{
-                                  opacity: 0,
-                                  x:       reduced ? 0 : exitX,
-                                  transition: { duration: TEXT_EXIT_S, ease: EASE_IN },
-                                }}
-                                className="mt-[clamp(0.75rem,2vw,1.25rem)] flex flex-row flex-wrap items-center gap-[clamp(0.5rem,1.5vw,0.75rem)]"
-                              >
-                                <GameCardActions
-                                  gameId={game.id}
-                                  isActive={isActive}
-                                  viewLabel={t("view_game")}
-                                  playLabel={t("play_now")}
-                                  registerPrimary={(el) => { primaryBtnRefs.current[idx] = el as HTMLAnchorElement | null; }}
-                                  registerSecondary={(el) => { secondaryBtnRefs.current[idx] = el as HTMLAnchorElement | null; }}
-                                  onPrimaryKeyDown={(e) => handlePrimaryKeyDown(e, idx)}
-                                  onSecondaryKeyDown={(e) => handleSecondaryKeyDown(e, idx)}
-                                />
-                              </motion.div>
-                            )
-                          )}
-                        </AnimatePresence>
-                      </motion.div>
-                    </motion.div>
-                  );
-                })}
-              </motion.div>
-            )}
-          </div>
+                return (
+                  <GameCard
+                    key={game.id}
+                    game={game}
+                    index={idx}
+                    total={GAMES.length}
+                    isActive={isActive}
+                    isHoverActive={isHoverActive}
+                    isExitingWithHover={exitingHoverIdx === idx}
+                    started={started}
+                    hasPointer={hasPointer}
+                    reduced={!!reduced}
+                    textVisible={textVisible}
+                    enterX={enterX}
+                    exitX={exitX}
+                    exitDuration={exitDuration}
+                    btnsExitDelay={btnsExitDelay}
+                    cardWidth={cardWidth}
+                    variants={cardV}
+                    title={t(`items.${game.id}.title`)}
+                    description={t(`items.${game.id}.description`)}
+                    viewLabel={t("view_game")}
+                    playLabel={t("play_now")}
+                    onHoverStart={() => { if (hasPointer) setHoveredIdx(idx); }}
+                    onHoverEnd={() => { if (hasPointer) setHoveredIdx(null); }}
+                    onActivate={() => { if (!isActive && hasPointer) goToCard(idx); }}
+                    onActionsHover={setButtonsHovered}
+                    registerPrimary={(el) => { primaryBtnRefs.current[idx] = el as HTMLAnchorElement | null; }}
+                    registerSecondary={(el) => { secondaryBtnRefs.current[idx] = el as HTMLAnchorElement | null; }}
+                    onPrimaryKeyDown={(e) => handlePrimaryKeyDown(e, idx)}
+                    onSecondaryKeyDown={(e) => handleSecondaryKeyDown(e, idx)}
+                  />
+                );
+              })}
+            </motion.div>
+          )}
         </div>
-      </motion.div>
+      </div>
 
       <GamesProgressControls
         currentIndex={currentIndex}
         totalCards={GAMES.length}
-        isPlaying={isPlaying}
+        isPlaying={isPlaying && isInView && !buttonsHovered}
         isVisible={isControlsVisible}
         fillRef={fillRef}
         onGoTo={goToCard}

@@ -12,6 +12,8 @@ interface GameCardActionsProps {
   registerSecondary: (el: HTMLElement | null) => void;
   onPrimaryKeyDown: (e: React.KeyboardEvent<HTMLElement>) => void;
   onSecondaryKeyDown: (e: React.KeyboardEvent<HTMLElement>) => void;
+  /** Pixel-perfect pointer hover over a button itself (not the row around it). */
+  onHover: (hovered: boolean) => void;
 }
 
 const ACTION_BUTTON_CLASS =
@@ -30,13 +32,19 @@ export function GameCardActions({
   registerSecondary,
   onPrimaryKeyDown,
   onSecondaryKeyDown,
+  onHover,
 }: GameCardActionsProps) {
+  const enter = () => onHover(true);
+  const leave = () => onHover(false);
+
   return (
     <>
       <PrimaryButton
         ref={registerPrimary}
         tabIndex={isActive ? 0 : -1}
         onKeyDown={onPrimaryKeyDown}
+        onMouseEnter={enter}
+        onMouseLeave={leave}
         href={`/games/${gameId}`}
         target="_self"
         rel={undefined}
@@ -48,6 +56,8 @@ export function GameCardActions({
         ref={registerSecondary}
         tabIndex={isActive ? 0 : -1}
         onKeyDown={onSecondaryKeyDown}
+        onMouseEnter={enter}
+        onMouseLeave={leave}
         href={`/games/${gameId}/play`}
         target="_self"
         rel={undefined}

@@ -11,6 +11,8 @@ export interface SecondaryButtonProps {
   className?: string;
   onClick?: () => void;
   onKeyDown?: (e: React.KeyboardEvent<HTMLElement>) => void;
+  onMouseEnter?: () => void;
+  onMouseLeave?: () => void;
   tabIndex?: number;
   disabled?: boolean;
   download?: boolean | string;
@@ -39,6 +41,8 @@ export const SecondaryButton = forwardRef<HTMLElement, SecondaryButtonProps>(
       className,
       onClick,
       onKeyDown,
+      onMouseEnter,
+      onMouseLeave,
       tabIndex,
       disabled = false,
       download,
@@ -74,6 +78,8 @@ export const SecondaryButton = forwardRef<HTMLElement, SecondaryButtonProps>(
         aria-label={ariaLabel}
         tabIndex={tabIndex ?? (disabled ? -1 : 0)}
         onKeyDown={onKeyDown}
+        onMouseEnter={onMouseEnter}
+        onMouseLeave={onMouseLeave}
       >
         {content}
       </motion.a>
@@ -91,6 +97,8 @@ export const SecondaryButton = forwardRef<HTMLElement, SecondaryButtonProps>(
       type="button"
       tabIndex={tabIndex ?? (disabled ? -1 : 0)}
       onKeyDown={onKeyDown}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
     >
       {content}
     </motion.button>

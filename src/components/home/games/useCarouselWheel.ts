@@ -2,125 +2,151 @@
 
 import { useEffect, useRef, type RefObject } from "react";
 
+import { useLiveRef } from "@/lib/hooks/useLiveRef";
+
+/** Horizontal travel (px) needed to fire a navigation. */
+const TRIGGER_THRESHOLD = 18;
+/** A gap longer than this (ms) between events resets an incomplete gesture. */
+const GESTURE_GAP_MS = 80;
+/**
+ * After the last wheel event of a gesture (including its momentum tail), wait
+ * this long (ms) before unlocking. macOS trackpad momentum events arrive every
+ * ~16 ms, so this keeps us locked through the whole tail.
+ */
+const UNLOCK_IDLE_MS = 40;
+/**
+ * While locked, an event in the OPPOSITE direction this large (px) is a genuine
+ * new flick (the user swiping back) — not tail noise — so we unlock at once.
+ * This is what makes rapid back-and-forth paging as responsive as the keyboard,
+ * while a same-direction movement stays locked to exactly one card no matter how
+ * its velocity wavers.
+ */
+const REVERSAL_MIN = 6;
+
 interface UseCarouselWheelOptions {
   containerRef: RefObject<HTMLDivElement | null>;
   itemCount: number;
-  currentIndexRef: RefObject<number>;
-  /** Shared with the drag/pan handler so a flick can't double-fire. */
+  /** In-flight target index — lets rapid swipes chain from the pending destination. */
+  pendingIndexRef: RefObject<number>;
+  /** This hook's own gesture lock (not shared — the pan handler owns a separate one). */
   swipeLockedRef: RefObject<boolean>;
   onNavigate: (nextIndex: number) => void;
 }
 
 /**
- * Translates horizontal wheel / trackpad input into carousel navigation.
+ * Translates horizontal wheel / trackpad input into one-card-per-gesture
+ * navigation.
  *
- * Distinguishes a deliberate "swipe" (single high-velocity flick → one card)
- * from a "rapid hold" (sustained low-velocity scrub → continuous paging) via a
- * small kinetic state machine, and normalizes physical mouse wheels (line/page
- * delta modes) to pixels. Vertical-dominant scrolls pass straight through.
+ * Fire on the first threshold crossing, then stay locked for the rest of that
+ * gesture — including its macOS momentum tail — by rescheduling an idle timeout
+ * on every event. The lock holds through *any* same-direction wobble, so one
+ * continuous movement always pages exactly one card; it only breaks early,
+ * mid-tail, on a direction reversal (the user swiping back). The next discrete
+ * flick — after the idle gap or a reversal — pages the next card, so paging feels
+ * one-at-a-time, like the arrow keys. A physical mouse wheel (line/page delta
+ * modes) unlocks immediately. Vertical-dominant scrolls pass through untouched.
+ *
+ * The listener and its idle timer are installed **exactly once**: `onNavigate`
+ * and `itemCount` are read through refs so a re-render (e.g. the flurry of hover
+ * / animation state updates a swipe triggers) can never tear the effect down
+ * mid-gesture and strand the lock — the bug that made the trackpad intermittently
+ * "stop responding".
  */
 export function useCarouselWheel({
   containerRef,
   itemCount,
-  currentIndexRef,
+  pendingIndexRef,
   swipeLockedRef,
   onNavigate,
 }: UseCarouselWheelOptions): void {
-  const wheelAccumulatorRef = useRef(0);
+  const accumulatorRef = useRef(0);
   const lastWheelTimeRef = useRef(0);
-  const hasDeceleratedRef = useRef(false);
-  const gestureTypeRef = useRef<"UNKNOWN" | "SWIPE" | "RAPID_HOLD">("UNKNOWN");
+  const unlockTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lockedDirRef = useRef(0);
+
+  // Read through refs so the effect below depends only on stable refs and runs
+  // once for the lifetime of the component.
+  const onNavigateRef = useLiveRef(onNavigate);
+  const itemCountRef = useLiveRef(itemCount);
 
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
 
+    const resetGesture = () => {
+      if (unlockTimerRef.current) clearTimeout(unlockTimerRef.current);
+      unlockTimerRef.current = null;
+      swipeLockedRef.current = false;
+      accumulatorRef.current = 0;
+      lockedDirRef.current = 0;
+    };
+
+    const scheduleUnlock = () => {
+      if (unlockTimerRef.current) clearTimeout(unlockTimerRef.current);
+      unlockTimerRef.current = setTimeout(resetGesture, UNLOCK_IDLE_MS);
+    };
+
     const handleWheel = (e: WheelEvent) => {
       let dX = e.deltaX;
       let dY = e.deltaY;
 
-      // Many browsers/OS combinations do not automatically map shift+wheel to deltaX
-      if (e.shiftKey && dY !== 0) {
-        dX = dY;
-        dY = 0;
-      }
-
-      // Allow vertical scroll to pass through
+      if (e.shiftKey && dY !== 0) { dX = dY; dY = 0; }
       if (Math.abs(dY) > Math.abs(dX)) return;
       e.preventDefault();
 
-      // Normalize physical mouse wheels (DOM_DELTA_LINE = 1, DOM_DELTA_PAGE = 2) to pixels
       let delta = dX;
       if (e.deltaMode === 1) delta *= 40;
       else if (e.deltaMode === 2) delta *= 800;
 
       const now = Date.now();
-      const dt = now - lastWheelTimeRef.current;
+      const dt  = now - lastWheelTimeRef.current;
       lastWheelTimeRef.current = now;
 
-      // Reset state on new gesture (pause > 150ms)
-      if (dt > 150) {
-        wheelAccumulatorRef.current = 0;
-        swipeLockedRef.current = false;
-        hasDeceleratedRef.current = false;
-        gestureTypeRef.current = "UNKNOWN";
-      }
-
       const absDelta = Math.abs(delta);
+      const dir = delta > 0 ? 1 : delta < 0 ? -1 : 0;
 
-      // Detect rapid consecutive swipes: if velocity dipped and spiked again
-      if (swipeLockedRef.current && gestureTypeRef.current === "SWIPE") {
-        if (absDelta < 15 || e.deltaMode !== 0) {
-          hasDeceleratedRef.current = true;
-        } else if (hasDeceleratedRef.current && absDelta > 30) {
-          swipeLockedRef.current = false;
-          hasDeceleratedRef.current = false;
-          wheelAccumulatorRef.current = 0;
+      // Long pause ⇒ the previous gesture is over; start fresh.
+      if (dt > GESTURE_GAP_MS) resetGesture();
+
+      if (swipeLockedRef.current) {
+        if (e.deltaMode !== 0) {
+          // Physical mouse: each notch is its own gesture — unlock immediately.
+          resetGesture();
+        } else {
+          // Trackpad: stay locked through this gesture and its tail. Only a real
+          // swipe in the opposite direction counts as a new gesture.
+          const reversed =
+            dir !== 0 && lockedDirRef.current !== 0 &&
+            dir !== lockedDirRef.current && absDelta >= REVERSAL_MIN;
+
+          if (reversed) {
+            resetGesture();
+          } else {
+            scheduleUnlock();
+            return; // swallow the tail / same-direction wobble
+          }
         }
       }
 
-      wheelAccumulatorRef.current += delta;
+      accumulatorRef.current += delta;
 
-      // Determine gesture type kinetically
-      if (gestureTypeRef.current === "UNKNOWN") {
-        if (absDelta > 15) {
-          gestureTypeRef.current = "SWIPE";
-        } else if (Math.abs(wheelAccumulatorRef.current) > 20) {
-          gestureTypeRef.current = "RAPID_HOLD";
+      if (Math.abs(accumulatorRef.current) > TRIGGER_THRESHOLD) {
+        const direction = accumulatorRef.current > 0 ? 1 : -1;
+        const nextIdx = pendingIndexRef.current + direction;
+        if (nextIdx >= 0 && nextIdx < itemCountRef.current) {
+          onNavigateRef.current(nextIdx);
         }
-      }
-
-      // If they suddenly flick during RAPID_HOLD, convert to SWIPE and lock
-      if (gestureTypeRef.current === "RAPID_HOLD" && absDelta > 30) {
-        gestureTypeRef.current = "SWIPE";
         swipeLockedRef.current = true;
-      }
-
-      // Execute navigation based on physical gesture type
-      if (gestureTypeRef.current === "SWIPE") {
-        if (!swipeLockedRef.current && Math.abs(wheelAccumulatorRef.current) > 30) {
-          const direction = wheelAccumulatorRef.current > 0 ? 1 : -1;
-          const nextIdx = currentIndexRef.current + direction;
-          if (nextIdx >= 0 && nextIdx < itemCount) {
-            onNavigate(nextIdx);
-          }
-          swipeLockedRef.current = true; // Lock for the rest of this gesture
-        }
-      }
-      else if (gestureTypeRef.current === "RAPID_HOLD") {
-        const RAPID_THRESHOLD = 35; // Pixels per card in scrub mode
-        if (Math.abs(wheelAccumulatorRef.current) > RAPID_THRESHOLD) {
-          const direction = wheelAccumulatorRef.current > 0 ? 1 : -1;
-          const nextIdx = currentIndexRef.current + direction;
-          if (nextIdx >= 0 && nextIdx < itemCount) {
-            onNavigate(nextIdx);
-          }
-          wheelAccumulatorRef.current = 0; // Reset accumulator for continuous rapid scrubbing
-        }
+        lockedDirRef.current = direction;
+        accumulatorRef.current = 0;
+        scheduleUnlock();
       }
     };
 
     el.addEventListener("wheel", handleWheel, { passive: false });
-    return () => el.removeEventListener("wheel", handleWheel);
-  }, [containerRef, itemCount, currentIndexRef, swipeLockedRef, onNavigate]);
+    return () => {
+      el.removeEventListener("wheel", handleWheel);
+      resetGesture();
+    };
+  }, [containerRef, pendingIndexRef, swipeLockedRef, onNavigateRef, itemCountRef]);
 }

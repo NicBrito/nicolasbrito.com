@@ -81,7 +81,8 @@
     "progress": {
       "play": "Play slideshow",
       "pause": "Pause slideshow",
-      "go_to": "Go to slide"
+      "go_to": "Go to slide",
+      "status": "Slide {current} of {total}"
     },
     "items": {
       "game-1": {
@@ -110,6 +111,10 @@
         "alt": "Preview of Game 5"
       }
     }
+  },
+  "Blog": {
+    "title": "Blog",
+    "coming_soon": "Coming Soon"
   },
   "ScrollProgress": {
     "home": "Home",

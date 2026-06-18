@@ -461,6 +461,9 @@ export function GamesSection() {
           aria-roledescription="carousel"
           aria-label={t("section_title")}
         >
+          <div className="sr-only" role="status" aria-live="polite" aria-atomic="true">
+            {t("progress.status", { current: currentIndex + 1, total: GAMES.length })}
+          </div>
           {containerWidth > 0 && (
             <motion.div
               initial={{ x: trackX }}

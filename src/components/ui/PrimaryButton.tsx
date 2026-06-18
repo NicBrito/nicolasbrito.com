@@ -59,7 +59,7 @@ export const PrimaryButton = forwardRef<HTMLElement, PrimaryButtonProps>(
     <>
       {children}
       {showArrow && (
-        <span className="transition-transform group-hover:translate-x-1 group-focus-visible:translate-x-1 ml-1">
+        <span aria-hidden="true" className="transition-transform group-hover:translate-x-1 group-focus-visible:translate-x-1 ml-1">
           →
         </span>
       )}

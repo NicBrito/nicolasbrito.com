@@ -81,7 +81,8 @@
     "progress": {
       "play": "Reproduzir apresentação",
       "pause": "Pausar apresentação",
-      "go_to": "Ir para slide"
+      "go_to": "Ir para slide",
+      "status": "Slide {current} de {total}"
     },
     "items": {
       "game-1": {
@@ -110,6 +111,10 @@
         "alt": "Prévia do Jogo 5"
       }
     }
+  },
+  "Blog": {
+    "title": "Blog",
+    "coming_soon": "Em Breve"
   },
   "ScrollProgress": {
     "home": "Início",

@@ -29,7 +29,7 @@ compact summary — never their raw exploration transcript.
 | --- | --- | --- |
 | Components, layout, motion, styling, UX | `frontend-architect` | core, stack, design, architecture |
 | Time/space complexity, bundle size, render/RSC cost | `performance-engineer` | core, stack, architecture |
-| Prompt/context bloat, agent or orchestration efficiency | `token-economist` | core (+ this file) |
+| Prompt/context bloat, agent or orchestration efficiency | `token-economist` | core (+ this file, + agents registry) |
 | Unit/integration tests, coverage, flakiness | `test-engineer` | core, stack, testing |
 | Input validation, auth, crypto, dependency CVEs, RBAC | `security-analyst` | core, security, architecture |
 | en/pt catalog parity, WCAG AA, aria, focus order | `i18n-a11y-steward` | core, stack, design |

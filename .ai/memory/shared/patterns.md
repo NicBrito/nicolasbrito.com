@@ -46,3 +46,17 @@ requires the same change in the other.
 
 `PrimaryButton`, `SecondaryButton`, `Container`, `MorphingLabel`, `ProjectCard`,
 `SocialLink`. Check these before creating any new UI element.
+
+## Security surface (`next.config.ts`, `src/proxy.ts`)
+
+Today the site is a static bilingual export with **no input boundaries**: `src/proxy.ts` is a
+thin `createMiddleware(routing)` over the closed `['en','pt']` allow-list (no open-redirect),
+and there are no route handlers or `use server` actions. Headers live in `next.config.ts` —
+note **no CSP yet** (`docs/audit-2026-06-17.md`, SEC-1). Re-audit the moment a route handler,
+form, or network call is introduced.
+
+## Contrast caveat (`--accent` #2997ff)
+
+`--accent` as **text on the dark background** passes AA (≈6.96:1), but **white text on an
+accent fill** (e.g. `PrimaryButton`) is ≈3.0:1 — below AA 4.5:1. Don't reuse white-on-accent
+for labels without a contrast check.

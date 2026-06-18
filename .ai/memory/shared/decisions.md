@@ -5,6 +5,19 @@ decision. Record *why*, not just *what* — the code already shows the *what*.
 
 ---
 
+## 2026-06-17 — Repository audit (read-only, orchestrated)
+
+**Decision:** A full evidence-based audit (performance, architecture, security, tests,
+i18n/a11y, UX) was run via the `orchestrator` dispatching six specialists in parallel.
+Findings + a waved remediation plan live in `docs/audit-2026-06-17.md`.
+
+**Why / durable facts:** Code is O(n)-clean; the cost is delivery — the whole home page is
+client-rendered, Framer Motion is ~71 KB gz, no RSC offload. Top gaps: no CSP, `next` 16.1.6
+HIGH advisories, broken coverage tooling (`@vitest/coverage-v8` not installed), partial
+`prefers-reduced-motion`, and a hardcoded Blog section. **Open decision (DESIGN-1):** permit
+tuned (non-default) springs in the carousel vs. enforce the constant-duration rule —
+unresolved.
+
 ## 2026-06-17 — Layered, DRY agent orchestration system
 
 **Decision:** AI configuration is organized as five layers — modular rules

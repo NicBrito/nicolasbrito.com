@@ -21,6 +21,10 @@
 | [`rules/design.md`](./rules/design.md) | TRIGGERED | UI/UX & frontend tasks. Hierarchy, 8-pt grid, typography, states, theming, glassmorphism, WCAG AA. |
 | [`rules/testing.md`](./rules/testing.md) | TRIGGERED | Logic, QA & refactoring tasks. AAA structure, coverage integrity, deterministic isolation. |
 
+> **Note:** the Status column describes the **general project assistant** (whole-repo
+> context). A **specialized agent ignores these labels** and loads only the `rules:`
+> subset declared in its charter — see "How to load" below.
+
 ## How to load (default for whole-project context)
 
 If you are operating as the **general project assistant** (no specialized agent), load

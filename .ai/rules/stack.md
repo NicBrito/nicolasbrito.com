@@ -15,7 +15,7 @@ summary: nicolasbrito.com specifics — Next.js 16 App Router, next-intl en/pt p
   * Directory Constraints: Localized routes in `src/app/[locale]/`, shared utils in `src/lib/`, UI primitives in `src/components/ui/`.
 * **Motion & Physics (Apple Design System):**
   * Framer Motion is the standard. Use constant durations with custom `cubic-bezier` easing (e.g., `[0.2, 0, 0.2, 1]` for entry).
-  * NEVER use default springs. Do not animate layout properties directly; use `transform` via `useTransform` to offload to the GPU.
+  * NEVER use *default* springs. Explicitly-tuned springs (custom `stiffness`/`damping`, e.g. the carousel's `CARD_SPRING` / `btnSpring`) ARE permitted where the interaction's feel depends on physics; default/unparameterized springs remain banned. Do not animate layout properties directly; use `transform` via `useTransform` to offload to the GPU.
   * Always use `<AnimatePresence mode="popLayout">` to prevent layout thrashing.
 * **Component Library Status (DO NOT RECREATE):**
   * Existing Primitives: `PrimaryButton`, `SecondaryButton`, `Container`, `MorphingLabel` (letter-by-letter animation), `ProjectCard`, `SocialLink`.

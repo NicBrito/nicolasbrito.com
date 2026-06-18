@@ -27,7 +27,7 @@ export default async function Home({ params }: HomeProps) {
       <GamesSection />
 
       <section id="blog" className="min-h-[50vh] py-24 flex items-center justify-center border-t border-white/5">
-         <div className="text-center text-foreground/40">
+         <div className="text-center text-foreground/60">
             <h2 className="text-2xl font-semibold mb-2">{t('title')}</h2>
             <p>{t('coming_soon')}</p>
          </div>

@@ -5,6 +5,27 @@ decision. Record *why*, not just *what* — the code already shows the *what*.
 
 ---
 
+## 2026-06-18 — Deep second pass (Wave 3): new findings, safe fixes
+
+**Decision:** Original Waves 0–2 backlog exhausted, so 3 specialists ran a fresh READ-ONLY deep
+review (correctness/perf, a11y/i18n/SEO, code-quality/types). Leak/error/type surfaces came back
+**clean** — no resource leaks (all timers/listeners/RAF/observers are torn down), no unsafe async,
+i18n parity intact. Fixed the safe/additive net-new findings: (DP-1) `useMediaQuery` cached its
+`MediaQueryList` per query in a ref (was allocating `window.matchMedia` every render in the carousel
+hot path; test-safe — keyed by query string, not the mock-absent `.media`); (DP-2) removed a dead
+`bg-radial-gradient` div in Hero (not a Tailwind v4 utility → compiled to zero CSS); (DP-3) `encodeURI`
+on the CV PDF hrefs (raw spaces/`í`/apostrophe → CDN-404 risk); (DP-4) Blog placeholder text `/40`→`/60`
+(3.98:1→~6.8:1 AA); (DP-5) full OpenGraph + Twitter card metadata; (DP-6) added `app/robots.ts` +
+`app/sitemap.ts` (next-intl matcher `['/', '/(pt|en)/:path*']` doesn't intercept them); (DP-7)
+generated `public/og-image.png` (1200×630, accent "N" monogram + name) via sharp.
+
+**Why / deferred:** kept the no-breakage mandate — every fix is additive/correctness or invisible
+(metadata/perf), none touch navbar/carousel motion. Deferred DP-8..14 (ScrollProgress stale-closure
+& double-observer, carousel sync-complete & wrap-direction, Navbar `setTimeout(0)`, `<footer>`
+landmark, latent ProjectCard cached-broken-image) — they touch sensitive motion components, add
+visible UI, or are unreachable today. Gate: lint clean, 86/86, build green (7 routes), smoke all 200.
+See [[patterns]].
+
 ## 2026-06-18 — Wave 2 audit closure (completed)
 
 **Decision:** Wave 2 finished. Code-completed: (1) **A11Y-1 nav/menu** reduced-motion — re-applied

@@ -1,6 +1,6 @@
 "use client";
 
-import { AnimatePresence, motion, Variants } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion, Variants } from "framer-motion";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { type MutableRefObject, useCallback, useEffect, useRef, useState } from "react";
@@ -109,6 +109,7 @@ const staggerContainer: Variants = {
 
 export function HamburgerMenu() {
   const t = useTranslations("Navbar");
+  const reduced = useReducedMotion();
   const [isOpen, setIsOpen] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
   const [isKeyboardNavigation, setIsKeyboardNavigation] = useState(false);
@@ -264,6 +265,27 @@ export function HamburgerMenu() {
     setIsOpen(true);
   }, [isOpen, closeMenu]);
 
+  // prefers-reduced-motion: strip the blur and the directional x/y slide from
+  // the per-item cascade so items just fade. The `open` resting state and its
+  // timing are untouched, so the menu still reads as a real transition.
+  const itemMotion: Variants = reduced
+    ? {
+        closed: { opacity: 0, x: 0, y: 0, filter: "blur(0px)", transition: { duration: 0.18, ease: [0.42, 0, 1, 1] } },
+        open: { opacity: 1, x: 0, y: 0, filter: "blur(0px)", transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] } },
+        exit: { opacity: 0, x: 0, y: 0, filter: "blur(0px)", transition: { duration: 0.28, ease: [0.42, 0, 1, 1] } },
+      }
+    : itemCascade;
+
+  // prefers-reduced-motion: collapse the cascade stagger/delay so items appear
+  // together rather than sweeping in one-by-one.
+  const staggerMotion: Variants = reduced
+    ? {
+        open: { transition: { staggerChildren: 0 } },
+        closed: { transition: { staggerChildren: 0 } },
+        exit: { transition: { staggerChildren: 0 } },
+      }
+    : staggerContainer;
+
   return (
     <>
       <button
@@ -399,7 +421,7 @@ export function HamburgerMenu() {
                       exit={{ transition: { duration: 0.28 } }}
                     >
                       <motion.ul
-                        variants={staggerContainer}
+                        variants={staggerMotion}
                         initial="closed"
                         animate={isClosing ? "closed" : "open"}
                         exit="exit"
@@ -407,7 +429,7 @@ export function HamburgerMenu() {
                         className="touch-menu-list flex flex-col pt-6 pl-[clamp(3rem,9vw,4.5rem)]"
                       >
                         {NAV_ITEMS.map((item) => (
-                          <motion.li key={item.key} variants={itemCascade} custom={directionRef}>
+                          <motion.li key={item.key} variants={itemMotion} custom={directionRef}>
                             {item.hasSubmenu ? (
                               <button
                                 type="button"
@@ -447,14 +469,14 @@ export function HamburgerMenu() {
                       exit={{ transition: { duration: 0.28 } }}
                     >
                       <motion.ul
-                        variants={staggerContainer}
+                        variants={staggerMotion}
                         initial="closed"
                         animate={isClosing ? "closed" : "open"}
                         exit="exit"
                         custom={directionRef}
                         className="touch-menu-list flex flex-col pt-6 pl-[clamp(3rem,9vw,4.5rem)]"
                       >
-                        <motion.li variants={itemCascade} custom={directionRef}>
+                        <motion.li variants={itemMotion} custom={directionRef}>
                           <Link
                             href={currentSubmenu!.href}
                             onClick={closeMenu}
@@ -470,7 +492,7 @@ export function HamburgerMenu() {
                         </motion.li>
 
                         {currentSubmenu!.items.map((itemKey) => (
-                          <motion.li key={itemKey} variants={itemCascade} custom={directionRef}>
+                          <motion.li key={itemKey} variants={itemMotion} custom={directionRef}>
                             <Link
                               href={currentSubmenu!.href}
                               onClick={closeMenu}

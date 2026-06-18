@@ -5,7 +5,7 @@ import { Container } from "@/components/ui/Container";
 import { MorphingLabel } from "@/components/ui/MorphingLabel";
 import { morphingLabelSpeed } from "@/lib/animations";
 import { cn } from "@/lib/utils";
-import { AnimatePresence, motion, Variants } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion, Variants } from "framer-motion";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -107,10 +107,42 @@ const ANIMATIONS = {
 export function Navbar() {
     const t = useTranslations("Navbar");
     const pathname = usePathname();
+    const reduced = useReducedMotion();
     const [activeMenu, setActiveMenu] = useState<MenuKey | null>(null);
     const [isNavbarVisible, setIsNavbarVisible] = useState(false);
     const [focusedNavItem, setFocusedNavItem] = useState<string | null>(null);
     const currentMenu = activeMenu ? MENU_CONFIG[activeMenu] : null;
+
+    // prefers-reduced-motion: drop the blur and the small y-slide from the
+    // dropdown item enter/exit (vestibular motion). Opacity + timing are kept so
+    // the disclosure still reads, and the resting state stays byte-identical.
+    const contentItem: Variants = reduced
+        ? {
+            hidden: { opacity: 0, y: 0, filter: "blur(0px)" },
+            visible: {
+                opacity: 1,
+                y: 0,
+                filter: "blur(0px)",
+                transition: { duration: 0.4, ease: EASING.decelerate }
+            },
+            exit: {
+                opacity: 0,
+                y: 0,
+                filter: "blur(0px)",
+                transition: { duration: CONTENT_ITEM_EXIT_DURATION, ease: EASING.accelerate }
+            }
+        }
+        : ANIMATIONS.contentItem;
+
+    // prefers-reduced-motion: collapse the per-item stagger to 0 so items
+    // appear together rather than cascading.
+    const column: Variants = reduced
+        ? {
+            hidden: { opacity: 1 },
+            visible: { opacity: 1, transition: { staggerChildren: 0 } },
+            exit: { opacity: 1, transition: { staggerChildren: 0 } }
+        }
+        : ANIMATIONS.column;
 
     const navItemRefs = useRef<Map<string, HTMLAnchorElement>>(new Map());
     const dropdownItemRefs = useRef<Map<string, HTMLAnchorElement>>(new Map());
@@ -351,7 +383,7 @@ export function Navbar() {
             <motion.nav
                 role="navigation"
                 aria-label="Main navigation"
-                initial={{ y: -20, opacity: 0 }}
+                initial={reduced ? { y: 0, opacity: 0 } : { y: -20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1], delay: 0.2 }}
                 className="absolute top-0 inset-x-0 z-50 w-full"
@@ -462,10 +494,10 @@ export function Navbar() {
 
                                     <motion.div
                                         className="col-span-1 sm:col-span-3 sm:col-start-3 flex flex-col gap-3"
-                                        variants={ANIMATIONS.column}
+                                        variants={column}
                                     >
                                         <motion.div
-                                            variants={ANIMATIONS.contentItem}
+                                            variants={contentItem}
                                             className="text-xs font-semibold text-foreground/50 mb-1 uppercase tracking-wider relative min-h-[1.5em] flex items-center overflow-hidden"
                                         >
                                             <MorphingLabel
@@ -476,7 +508,7 @@ export function Navbar() {
                                             />
                                         </motion.div>
 
-                                        <motion.div variants={ANIMATIONS.contentItem}>
+                                        <motion.div variants={contentItem}>
                                             <Link
                                                 ref={(el) => {
                                                     if (el) exploreItemRefs.current.set(`${activeMenu}-explore`, el as HTMLAnchorElement);
@@ -516,10 +548,10 @@ export function Navbar() {
 
                                     <motion.div
                                         className="col-span-1 sm:col-span-4 sm:col-start-7 flex flex-col gap-4 pl-0 sm:pl-12"
-                                        variants={ANIMATIONS.column}
+                                        variants={column}
                                     >
                                         <motion.div
-                                            variants={ANIMATIONS.contentItem}
+                                            variants={contentItem}
                                             className="text-xs font-semibold text-foreground/50 mb-2 uppercase tracking-wider relative min-h-[1.5em] flex items-center overflow-hidden"
                                         >
                                             <MorphingLabel
@@ -534,7 +566,7 @@ export function Navbar() {
                                             {currentMenu.items.map((itemKey, index) => (
                                                 <motion.div
                                                     key={index}
-                                                    variants={ANIMATIONS.contentItem}
+                                                    variants={contentItem}
                                                 >
                                                     <Link
                                                         ref={(el) => {

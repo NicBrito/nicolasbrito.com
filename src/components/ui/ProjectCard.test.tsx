@@ -68,12 +68,29 @@ vi.mock("@/components/ui/SecondaryButton", () => ({
   ),
 }));
 
+// ---------------------------------------------------------------------------
+// framer-motion mock — renders plain <div> elements and strips animation props
+// that are not valid DOM attributes (mirrors the approach in SocialLink.test.tsx).
+// Prevents jsdom warnings:
+//   "Received `true` for a non-boolean attribute `layout`."
+//   "Unknown event handler property `onHoverEnd`. It will be ignored."
+// ---------------------------------------------------------------------------
 vi.mock("framer-motion", () => ({
   motion: {
     div: ({ children, ...props }: MockMotionDivProps) => {
       const domProps = { ...props } as Record<string, unknown>;
+      delete domProps.layout;
+      delete domProps.variants;
+      delete domProps.initial;
+      delete domProps.animate;
+      delete domProps.exit;
+      delete domProps.transition;
+      delete domProps.custom;
       delete domProps.whileHover;
+      delete domProps.whileTap;
+      delete domProps.whileFocus;
       delete domProps.onHoverStart;
+      delete domProps.onHoverEnd;
 
       return <div {...(domProps as HTMLAttributes<HTMLDivElement>)}>{children}</div>;
     },
@@ -91,38 +108,52 @@ const DEFAULT_PROPS = {
 
 describe("ProjectCard", () => {
   it("RENDERS CARD WITH TITLE AND DESCRIPTION", () => {
+    // Arrange
+    // Act
     render(<ProjectCard {...DEFAULT_PROPS} />);
 
+    // Assert
     expect(screen.getByText("Test Project Title")).toBeInTheDocument();
     expect(screen.getByText("Test project description")).toBeInTheDocument();
   });
 
   it("RENDERS DEFAULT ACTION BUTTONS", () => {
+    // Arrange
+    // Act
     render(<ProjectCard {...DEFAULT_PROPS} />);
 
+    // Assert
     expect(screen.getByText("View Case")).toBeInTheDocument();
     expect(screen.getByText("Visit Site")).toBeInTheDocument();
   });
 
   it("APPLIES CUSTOM COLSPAN CLASS", () => {
+    // Arrange
+    // Act
     const { container } = render(
       <ProjectCard {...DEFAULT_PROPS} colSpan="md:col-span-6" />
     );
 
+    // Assert
     const card = container.querySelector(".md\\:col-span-6");
     expect(card).toBeInTheDocument();
   });
 
   it("APPLIES CUSTOM CLASSNAME", () => {
+    // Arrange
+    // Act
     const { container } = render(
       <ProjectCard {...DEFAULT_PROPS} className="custom-class" />
     );
 
+    // Assert
     const card = container.querySelector(".custom-class");
     expect(card).toBeInTheDocument();
   });
 
   it("RENDERS WITH IMAGE WHEN PROVIDED", () => {
+    // Arrange
+    // Act
     render(
       <ProjectCard
         {...DEFAULT_PROPS}
@@ -130,14 +161,17 @@ describe("ProjectCard", () => {
       />
     );
 
+    // Assert
     const img = screen.getByRole("img", { name: "Test project image" });
     expect(img).toBeInTheDocument();
     expect(img).toHaveAttribute("data-src", "/test-image.jpg");
   });
 
   it("RENDERS CUSTOM ACTIONS WHEN PROVIDED", () => {
+    // Arrange
     const customActions = <button>Custom Action</button>;
 
+    // Act
     render(
       <ProjectCard
         {...DEFAULT_PROPS}
@@ -145,11 +179,14 @@ describe("ProjectCard", () => {
       />
     );
 
+    // Assert
     expect(screen.getByText("Custom Action")).toBeInTheDocument();
     expect(screen.queryByText("View Case")).not.toBeInTheDocument();
   });
 
   it("USES CUSTOM TRANSLATION NAMESPACE", () => {
+    // Arrange
+    // Act
     render(
       <ProjectCard
         {...DEFAULT_PROPS}
@@ -157,12 +194,16 @@ describe("ProjectCard", () => {
       />
     );
 
+    // Assert
     expect(screen.getByText("Test Project Title")).toBeInTheDocument();
   });
 
   it("RENDERS GRADIENT ORBS WITHOUT IMAGE", () => {
+    // Arrange
+    // Act
     const { container } = render(<ProjectCard {...DEFAULT_PROPS} />);
 
+    // Assert
     const orbFrom = container.querySelector(".bg-blue-600");
     const orbTo = container.querySelector(".bg-purple-600");
 
@@ -171,6 +212,8 @@ describe("ProjectCard", () => {
   });
 
   it("APPLIES DIFFERENT COLOR SCHEMES", () => {
+    // Arrange
+    // Act
     const { container } = render(
       <ProjectCard
         {...DEFAULT_PROPS}
@@ -181,6 +224,7 @@ describe("ProjectCard", () => {
       />
     );
 
+    // Assert
     const orbFrom = container.querySelector(".bg-emerald-600");
     const orbTo = container.querySelector(".bg-teal-600");
 
@@ -189,6 +233,8 @@ describe("ProjectCard", () => {
   });
 
   it("RENDERS WITH PRIORITY PROP FOR IMAGE LOADING", () => {
+    // Arrange
+    // Act
     render(
       <ProjectCard
         {...DEFAULT_PROPS}
@@ -197,11 +243,14 @@ describe("ProjectCard", () => {
       />
     );
 
+    // Assert
     const img = screen.getByRole("img", { name: "Test project image" });
     expect(img).toBeInTheDocument();
   });
 
   it("RENDERS WITHOUT PRIORITY PROP", () => {
+    // Arrange
+    // Act
     render(
       <ProjectCard
         {...DEFAULT_PROPS}
@@ -210,24 +259,33 @@ describe("ProjectCard", () => {
       />
     );
 
+    // Assert
     const img = screen.getByRole("img", { name: "Test project image" });
     expect(img).toBeInTheDocument();
   });
 
   it("RENDERS WITH DEFAULT COLSPAN WHEN NOT PROVIDED", () => {
+    // Arrange
+    // Act
     const { container } = render(<ProjectCard {...DEFAULT_PROPS} />);
 
+    // Assert
     const card = container.querySelector(".xl\\:col-span-4");
     expect(card).toBeInTheDocument();
   });
 
   it("RENDERS NOISE TEXTURE OVERLAY", () => {
+    // Arrange
+    // Act
     const { container } = render(<ProjectCard {...DEFAULT_PROPS} />);
 
+    // Assert
     expect(container.firstChild).toBeInTheDocument();
   });
 
   it("RENDERS GLASSMORPHISM BLUR LAYER WITH IMAGE", () => {
+    // Arrange
+    // Act
     render(
       <ProjectCard
         {...DEFAULT_PROPS}
@@ -235,13 +293,17 @@ describe("ProjectCard", () => {
       />
     );
 
+    // Assert
     const img = screen.getByRole("img", { name: "Test project image" });
     expect(img).toBeInTheDocument();
   });
 
   it("RENDERS WITH CORRECT LINK HREFS", () => {
+    // Arrange
+    // Act
     render(<ProjectCard {...DEFAULT_PROPS} />);
 
+    // Assert
     const viewCaseLink = screen.getByText("View Case").closest("a");
     const visitSiteLink = screen.getByText("Visit Site").closest("a");
 
@@ -250,8 +312,11 @@ describe("ProjectCard", () => {
   });
 
   it("KEEPS DEFAULT ACTION LINKS IN TAB ORDER", () => {
+    // Arrange
+    // Act
     render(<ProjectCard {...DEFAULT_PROPS} />);
 
+    // Assert
     const viewCaseLink = screen.getByText("View Case").closest("a");
     const visitSiteLink = screen.getByText("Visit Site").closest("a");
 

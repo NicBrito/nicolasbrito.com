@@ -5,6 +5,26 @@ decision. Record *why*, not just *what* — the code already shows the *what*.
 
 ---
 
+## 2026-06-18 — Wave 2 audit closure (completed)
+
+**Decision:** Wave 2 finished. Code-completed: (1) **A11Y-1 nav/menu** reduced-motion — re-applied
+to Navbar + HamburgerMenu as a PURE additive gate (every `reduced===false` branch git-diff-verified
+identical to the prior working code; locals `contentItem`/`column`/`itemMotion`/`staggerMotion`
+fall back to the exact module-level variants). Drops blur + large slide/stagger under reduced-motion;
+disclosure `height` sweeps + icon rotation kept. (2) **SEC-4** icons — generated placeholder PWA
+icons with `sharp` (accent `#2997ff` "N" monogram on `#000`): apple-touch-icon 180, icon-192, icon-512;
+all serve 200, manifest valid, owner-replaceable. Closed by verification/decision: **PERF-3** font CLS
+(next/font emits size-adjust fallback), **A11Y-5** (existing `group-focus-visible:text-foreground` is a
+valid WCAG 2.4.7 indicator), **ARCH-1** KEEP (showArrow / image branch are intentional forward API,
+not dead code). ProjectCard test now mocks framer-motion (warnings gone). Gate: lint clean, 86/86,
+build green, prod smoke (routes + icons all 200).
+
+**Why / still open:** the owner stressed "do not break established/working functionality" — so the
+nav re-do was done as a provably-additive gate (not the entangled edit that broke it before). Genuinely
+blocked, NOT auto-completable: **PERF-1** (Hero RSC — win needs killing the Hero entry animation +
+Lighthouse), **PERF-2** (LazyMotion — invasive across carousel/navbar, uncertain win), **SEC-5** (HSTS
+submission — external owner action), **UX-2** (per-item detail routes don't exist). See [[patterns]].
+
 ## 2026-06-18 — Wave 1 remediation (security, a11y, UX, tests)
 
 **Decision:** Wave 1 remediation landed in commit series; final gate: lint clean, 86/86 tests

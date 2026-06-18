@@ -31,7 +31,7 @@ const BUTTON_BASE_CLASS =
   "inline-flex items-center justify-center rounded-full transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:opacity-50 disabled:pointer-events-none disabled:cursor-not-allowed font-semibold tracking-tight cursor-pointer";
 
 const BUTTON_PRIMARY_CLASS =
-  "bg-accent text-white hover:bg-accent/90 focus-visible:bg-accent/90 shadow-xl shadow-black/20";
+  "bg-accent-strong text-white hover:bg-accent-strong/90 focus-visible:bg-accent-strong/90 shadow-xl shadow-black/20";
 
 export const PrimaryButton = forwardRef<HTMLElement, PrimaryButtonProps>(
   (

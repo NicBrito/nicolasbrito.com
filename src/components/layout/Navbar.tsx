@@ -365,8 +365,10 @@ export function Navbar() {
                 <motion.div
                     className="relative z-50 border-b border-white/0"
                     animate={{
-                        backgroundColor: isNavbarVisible ? "var(--background)" : "transparent",
-                        borderBottomColor: isNavbarVisible ? "transparent" : "transparent"
+                        // Framer cannot animate the `transparent` keyword — use rgba(0,0,0,0)
+                        // (same visual: fully-transparent black) so the fade emits no warning.
+                        backgroundColor: isNavbarVisible ? "var(--background)" : "rgba(0,0,0,0)",
+                        borderBottomColor: "rgba(0,0,0,0)"
                     }}
                     transition={{
                         duration: isNavbarVisible ? 0.2 : 0.5,

@@ -33,7 +33,7 @@ compact summary — never their raw exploration transcript.
 | Unit/integration tests, coverage, flakiness | `test-engineer` | core, stack, testing |
 | Input validation, auth, crypto, dependency CVEs, RBAC | `security-analyst` | core, security, architecture |
 | en/pt catalog parity, WCAG AA, aria, focus order | `i18n-a11y-steward` | core, stack, design |
-| `docs/` upkeep, shared-memory curation | `docs-scribe` | core, stack |
+| `docs/` upkeep, shared-memory curation | `docs-scribe` | core |
 | Multi-domain / unclear / needs decomposition | `orchestrator` | core (+ this file) |
 
 A task may fan out to several agents (e.g. "add a settings panel" → `frontend-architect`

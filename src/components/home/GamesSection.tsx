@@ -2,10 +2,14 @@
 
 import { motion, useReducedMotion } from "framer-motion";
 import { useTranslations } from "next-intl";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 
 import { useLiveRef } from "@/lib/hooks/useLiveRef";
 import { useMediaQuery } from "@/lib/hooks/useMediaQuery";
+
+// Run layout-synchronously on the client (so the first paint already has a
+// measured width) while no-op'ing during SSR to avoid React's warning.
+const useIsomorphicLayoutEffect = typeof window !== "undefined" ? useLayoutEffect : useEffect;
 
 import { GameCard } from "./games/GameCard";
 import { GamesProgressControls } from "./games/GamesProgressControls";
@@ -154,10 +158,18 @@ export function GamesSection() {
     pendingFocusRef.current = null;
   }, [currentIndex]);
 
-  // Track the container width to size cards and centre the active one.
-  useEffect(() => {
+  // Track the container width to size cards and centre the active one. Seed the
+  // width synchronously (layout effect, before paint) from getBoundingClientRect
+  // so the track renders measured on the first frame instead of flashing empty
+  // for one frame while the ResizeObserver reports. The container has no padding
+  // or border, so its border-box width equals the observer's contentRect width —
+  // the seed and subsequent observations stay in agreement. The ResizeObserver
+  // then keeps it current across resizes.
+  useIsomorphicLayoutEffect(() => {
     const el = containerRef.current;
     if (!el) return;
+    const initialWidth = el.getBoundingClientRect().width;
+    if (initialWidth > 0) setContainerWidth(initialWidth);
     const ro = new ResizeObserver(([entry]) => setContainerWidth(entry.contentRect.width));
     ro.observe(el);
     return () => ro.disconnect();

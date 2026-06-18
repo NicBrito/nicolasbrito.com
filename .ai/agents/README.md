@@ -16,7 +16,7 @@ recommendation, the role prose is model-neutral.
 | [`test-engineer`](./test-engineer.md) | Vitest/RTL coverage, determinism | core, stack, testing | mid |
 | [`security-analyst`](./security-analyst.md) | Zero-trust, validation, crypto, RBAC, deps | core, security, architecture | top |
 | [`i18n-a11y-steward`](./i18n-a11y-steward.md) | en/pt parity, WCAG AA | core, stack, design | cheap |
-| [`docs-scribe`](./docs-scribe.md) | docs/ + shared-memory curation | core, stack | cheap |
+| [`docs-scribe`](./docs-scribe.md) | docs/ + shared-memory curation | core | cheap |
 
 No agent loads all six rule modules — that subset *is* the token optimization.
 

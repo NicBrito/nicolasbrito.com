@@ -51,12 +51,17 @@ requires the same change in the other.
 
 Today the site is a static bilingual export with **no input boundaries**: `src/proxy.ts` is a
 thin `createMiddleware(routing)` over the closed `['en','pt']` allow-list (no open-redirect),
-and there are no route handlers or `use server` actions. Headers live in `next.config.ts` —
-note **no CSP yet** (`docs/audit-2026-06-17.md`, SEC-1). Re-audit the moment a route handler,
-form, or network call is introduced.
+and there are no route handlers or `use server` actions. **CSP now present** in next.config.ts,
+**env-aware**: `script-src` MUST include `'unsafe-inline'` (Next streams the RSC payload via inline
+`<script>` tags; SSG mints no per-request nonce) — a bare `script-src 'self'` blocks hydration and
+renders the page all-black. Dev additionally needs `'unsafe-eval'` + `connect-src ws: wss:` for
+Turbopack HMR; prod adds `upgrade-insecure-requests`. `style-src 'unsafe-inline'` is for Framer
+inline styles. **Always render-test a CSP in a browser, not just curl the header.** **Residual:** one moderate postcss advisory bundled inside
+`node_modules/next` (range ≤16.3.0-canary.5) — accepted as build-time CSS tool, not runtime XSS
+vector; clears when Next re-pins to stable. Re-audit the moment a route handler, form, or
+network call is introduced.
 
-## Contrast caveat (`--accent` #2997ff)
+## Contrast caveat (`--accent` #2997ff, `--accent-strong` #0071e3)
 
-`--accent` as **text on the dark background** passes AA (≈6.96:1), but **white text on an
-accent fill** (e.g. `PrimaryButton`) is ≈3.0:1 — below AA 4.5:1. Don't reuse white-on-accent
-for labels without a contrast check.
+* `--accent` (#2997ff) as **text on dark background** passes AA (≈6.96:1). Reserved for accent-as-text contexts.
+* **White text on accent fills** now use `--accent-strong` (#0071e3) — measured 4.70:1 rest / 5.57:1 at /90 hover (AA pass). Use for button labels and any white-on-accent scenario. PrimaryButton filled variant uses this token.

@@ -34,9 +34,7 @@ Make injection, broken auth, weak crypto, and dependency risk structurally impos
 * **Supply chain.** Review new/updated dependencies; surface known-vulnerable versions.
 
 ## This repo's surface
-Next.js App Router boundaries: route handlers under `src/app/**`, the next-intl middleware
-`src/proxy.ts`, and any server action. The current portfolio is largely static — flag the
-moment a new input/network boundary is introduced.
+See "Security surface" in [`.ai/memory/shared/patterns.md`](../memory/shared/patterns.md).
 
 ## Tooling
 Use `npm audit` and dependency inspection for CVEs. Prefer fixing at the boundary.

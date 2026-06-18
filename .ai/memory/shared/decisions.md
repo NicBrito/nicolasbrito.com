@@ -5,6 +5,29 @@ decision. Record *why*, not just *what* — the code already shows the *what*.
 
 ---
 
+## 2026-06-18 — Wave 1 remediation (security, a11y, UX, tests)
+
+**Decision:** Wave 1 remediation landed in commit series; final gate: lint clean, 86/86 tests
+(was 64), build green (SSG /en + /pt + middleware), npm audit = 2 moderate / 0 high / 0 critical.
+
+**Why / durable facts:** SEC-1 (env-aware CSP in next.config.ts — `script-src` needs `'unsafe-inline'`
+for Next's inline RSC scripts; a bare `script-src 'self'` blacked out the whole page, caught only on
+browser render, not curl — now fixed + render-tested), SEC-2 (next 16.2.9), A11Y-3
+(`--accent-strong` #0071e3 for white-on-fill at 4.70:1 AA), A11Y-1 **partial** (reduced-motion kept in
+Hero + ScrollProgress only), PERF-4 (GamesSection track sync-seeded), TEST-2/3/4/5 (+22 tests, AAA).
+Two standing decisions: (a) SEC-3 residual postcss-in-next moderate accepted (build-time CSS, not
+runtime XSS; clears when Next re-pins), (b) white-on-accent fills use `--accent-strong` while brand
+`--accent` (#2997ff) stays for text-on-dark (6.96:1).
+
+**REVERTED (audit must not break existing behavior):** UX-2 and A11Y-5 were rolled back to commit
+`6343736`. Converting the Navbar/HamburgerMenu dropdown items from `<Link>` to non-interactive `<div>`
+(UX-2) silently stripped their `group-hover:text-foreground … transition-colors` hover affordance,
+breaking the dropdown; the A11Y-5 `focus-visible:ring-accent` ring was visually intrusive and rejected.
+Lesson: **behavior-changing UI edits in an audit must be browser-tested and must never remove an existing
+affordance** — prefer minimal/additive changes; when unsure, leave working UI alone. Separately fixed a
+pre-existing Framer warning (Navbar animated color to the `"transparent"` keyword → now `rgba(0,0,0,0)`).
+See [[patterns]] for contrast + security surface updates.
+
 ## 2026-06-17 — Repository audit (read-only, orchestrated)
 
 **Decision:** A full evidence-based audit (performance, architecture, security, tests,

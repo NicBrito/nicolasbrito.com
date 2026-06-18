@@ -1,6 +1,6 @@
 "use client";
 
-import { AnimatePresence, motion, useMotionValueEvent, useScroll, useTransform } from "framer-motion";
+import { AnimatePresence, motion, useMotionValueEvent, useReducedMotion, useScroll, useTransform } from "framer-motion";
 import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 
@@ -26,6 +26,15 @@ const BASE_MOTION = {
   x: 100,
   opacity: 0,
   filter: "blur(12px)",
+};
+
+// prefers-reduced-motion: drop the 100px slide and the blur; the label just
+// fades. (The `y` transform still tracks scroll — that's the indicator's job,
+// not a decorative entrance.)
+const BASE_MOTION_REDUCED = {
+  x: 0,
+  opacity: 0,
+  filter: "blur(0px)",
 };
 
 const BOUNCE_SCALE_KEYFRAMES = [1, 1.15, 1];
@@ -54,6 +63,7 @@ export function ScrollProgress() {
   const bounceTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isScrollingRef = useRef(false);
   const isBouncingRef = useRef(false);
+  const reduced = useReducedMotion();
   const { scrollY } = useScroll();
   const hasPointerDevice = useMediaQuery(POINTER_MEDIA_QUERY);
   const hasScrollbar = contentHeight > windowHeight;
@@ -183,14 +193,14 @@ export function ScrollProgress() {
       {hasPointerDevice && hasScrollbar && isScrolling && (
         <motion.div
           style={{ y }}
-          initial={BASE_MOTION}
+          initial={reduced ? BASE_MOTION_REDUCED : BASE_MOTION}
           animate={{
             x: 0,
             opacity: 1,
             filter: "blur(0px)",
-            scale: isBouncing ? BOUNCE_SCALE_KEYFRAMES : 1,
+            scale: !reduced && isBouncing ? BOUNCE_SCALE_KEYFRAMES : 1,
           }}
-          exit={BASE_MOTION}
+          exit={reduced ? BASE_MOTION_REDUCED : BASE_MOTION}
           transition={{
             duration: isScrolling ? ENTER_DURATION : EXIT_DURATION,
             ease: isScrolling ? ENTER_EASE : EXIT_EASE,

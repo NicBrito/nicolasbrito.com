@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, Variants } from "framer-motion";
+import { motion, useReducedMotion, Variants } from "framer-motion";
 import { Briefcase, FileText, Github, Linkedin } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
@@ -32,10 +32,20 @@ const textVariants: Variants = {
   },
 };
 
+// prefers-reduced-motion: drop the blur and the 40px slide; just a gentle fade
+// to the resting state so the hero is fully legible without large motion.
+const reducedTextVariants: Variants = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1, transition: { duration: 0.3 } },
+};
+
 export function Hero() {
   const t = useTranslations("Hero");
   const locale = useLocale();
+  const reduced = useReducedMotion();
   const cvUrl = locale === "pt" ? ACTION_LINKS.resume.pt : ACTION_LINKS.resume.en;
+
+  const entryVariants = reduced ? reducedTextVariants : textVariants;
 
   return (
     <section
@@ -52,19 +62,19 @@ export function Hero() {
         <motion.div
           initial="hidden"
           animate="visible"
-          transition={{ staggerChildren: 0.2 }}
+          transition={{ staggerChildren: reduced ? 0 : 0.2 }}
           className="max-w-5xl space-y-[clamp(1.5rem,4vw,2rem)]"
         >
           <div className="flex flex-col items-center justify-center -space-y-1 sm:-space-y-2">
             <motion.h1
-              variants={textVariants}
+              variants={entryVariants}
               className="text-[clamp(2.5rem,calc(0.333rem+10.833vw),9rem)] font-bold tracking-tighter text-foreground leading-none"
             >
               {t('name')}
             </motion.h1>
 
             <motion.span
-              variants={textVariants}
+              variants={entryVariants}
               className="text-[clamp(1.5rem,7.5vw,6rem)] font-bold tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-foreground/80 to-foreground/40 leading-tight pb-2"
             >
               {t('role')}
@@ -72,14 +82,14 @@ export function Hero() {
           </div>
 
           <motion.p
-            variants={textVariants}
+            variants={entryVariants}
             className="mx-auto max-w-2xl text-[clamp(1rem,calc(0.75rem+0.9375vw),1.5rem)] leading-relaxed text-foreground/60 font-medium pt-[clamp(0.5rem,1.5vw,1rem)] px-4 sm:px-0"
           >
             {t('description')}
           </motion.p>
 
           <motion.div
-            variants={textVariants}
+            variants={entryVariants}
             className="flex flex-col sm:flex-row items-center justify-center gap-[clamp(1rem,2.5vw,1.5rem)] pt-[clamp(1.5rem,6vw,3rem)] px-4 sm:px-0"
           >
             <PrimaryButton
@@ -106,9 +116,9 @@ export function Hero() {
       </Container>
 
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: reduced ? 0 : 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 1.0, duration: 0.8, ease: "easeOut" }}
+        transition={reduced ? { duration: 0.3 } : { delay: 1.0, duration: 0.8, ease: "easeOut" }}
         className="absolute bottom-[clamp(2rem,5vw,3rem)] left-0 right-0 flex justify-center gap-[clamp(1rem,2vw,1.5rem)] z-30"
       >
         <SocialLink

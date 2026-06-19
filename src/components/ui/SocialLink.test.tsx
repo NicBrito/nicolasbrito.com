@@ -85,7 +85,7 @@ describe("SocialLink", () => {
     // Assert
     const link = screen.getByRole("link");
     expect(link).toHaveAttribute("target", "_blank");
-    expect(link).toHaveAttribute("rel", "noreferrer");
+    expect(link).toHaveAttribute("rel", "noopener noreferrer");
   });
 
   it("RESPECTS CUSTOM TARGET PROP", () => {

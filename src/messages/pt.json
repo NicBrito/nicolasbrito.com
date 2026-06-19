@@ -1,5 +1,6 @@
 {
   "Navbar": {
+    "aria_label": "Navegação principal",
     "home": "Início",
     "projects": "Projetos",
     "games": "Jogos",
@@ -82,7 +83,7 @@
       "play": "Reproduzir apresentação",
       "pause": "Pausar apresentação",
       "go_to": "Ir para slide",
-      "status": "Slide {current} de {total}"
+      "status": "Slide {current} de {total}: {title}"
     },
     "items": {
       "game-1": {

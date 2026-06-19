@@ -31,7 +31,7 @@ export function SocialLink({
   label,
   className,
   target = "_blank",
-  rel = "noreferrer",
+  rel = "noopener noreferrer",
 }: SocialLinkProps) {
   return (
     <motion.a

@@ -1,5 +1,6 @@
 {
   "Navbar": {
+    "aria_label": "Main navigation",
     "home": "Home",
     "projects": "Projects",
     "games": "Games",
@@ -82,7 +83,7 @@
       "play": "Play slideshow",
       "pause": "Pause slideshow",
       "go_to": "Go to slide",
-      "status": "Slide {current} of {total}"
+      "status": "Slide {current} of {total}: {title}"
     },
     "items": {
       "game-1": {

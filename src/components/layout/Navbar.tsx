@@ -382,7 +382,7 @@ export function Navbar() {
 
             <motion.nav
                 role="navigation"
-                aria-label="Main navigation"
+                aria-label={t("aria_label")}
                 initial={reduced ? { y: 0, opacity: 0 } : { y: -20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1], delay: 0.2 }}
@@ -422,30 +422,39 @@ export function Navbar() {
                                         aria-haspopup={item.hasDropdown ? "menu" : undefined}
                                         aria-expanded={item.hasDropdown && activeMenu === item.key ? true : undefined}
                                         className={cn(
-                                            "text-[clamp(0.75rem,2vw,0.9375rem)] font-medium tracking-wide transition-all duration-300 antialiased block leading-none",
+                                            "group block leading-none antialiased transition-all duration-300",
                                             "py-1.5 px-2 sm:px-3 -mx-2 sm:-mx-3 rounded-full",
                                             "outline-none focus:bg-white/20 focus-visible:bg-white/20",
-                                            isNavbarVisible
-                                                ? (
-                                                    activeMenu === item.key || focusedNavItem === item.key
-                                                        ? "text-foreground"
-                                                        : "text-foreground/70 hover:text-foreground focus:text-foreground focus-visible:text-foreground"
-                                                )
-                                                : (pathname === item.href || focusedNavItem === item.key ? "text-white" : "text-white/70 hover:text-white focus:text-white focus-visible:text-white")
+                                            // Keep the padded box (and its keyboard-focus pill) pixel-identical,
+                                            // but only the visible label below is a pointer target.
+                                            "pointer-events-none",
                                         )}
-                                        onMouseEnter={() => {
-                                            if (item.hasDropdown) {
-                                                openMenu(item.key as MenuKey);
-                                            } else {
-                                                cancelHoverDelay();
-                                                setActiveMenu(null);
-                                            }
-                                        }}
                                         onFocus={() => handleNavItemFocus(item)}
                                         onBlur={handleNavItemBlur}
                                         onKeyDown={(e) => handleNavItemKeyDown(e, item, index)}
                                     >
-                                        {t(item.key)}
+                                        <span
+                                            className={cn(
+                                                "pointer-events-auto text-[clamp(0.75rem,2vw,0.9375rem)] font-medium tracking-wide transition-colors duration-300",
+                                                isNavbarVisible
+                                                    ? (
+                                                        activeMenu === item.key || focusedNavItem === item.key
+                                                            ? "text-foreground"
+                                                            : "text-foreground/70 hover:text-foreground group-focus:text-foreground group-focus-visible:text-foreground"
+                                                    )
+                                                    : (pathname === item.href || focusedNavItem === item.key ? "text-white" : "text-white/70 hover:text-white group-focus:text-white group-focus-visible:text-white")
+                                            )}
+                                            onMouseEnter={() => {
+                                                if (item.hasDropdown) {
+                                                    openMenu(item.key as MenuKey);
+                                                } else {
+                                                    cancelHoverDelay();
+                                                    setActiveMenu(null);
+                                                }
+                                            }}
+                                        >
+                                            {t(item.key)}
+                                        </span>
                                     </Link>
                                 </li>
                             ))}
@@ -519,7 +528,8 @@ export function Navbar() {
                                                     "block group w-fit",
                                                     "py-1 px-2 -mx-2 rounded-full",
                                                     "outline-none focus:bg-white/20 focus-visible:bg-white/20",
-                                                    "transition-all duration-200"
+                                                    // Padded box + focus pill unchanged; only the label takes pointer events.
+                                                    "transition-all duration-200 pointer-events-none"
                                                 )}
                                                 data-dropdown-item
                                                 tabIndex={0}
@@ -534,7 +544,7 @@ export function Navbar() {
                                                     }
                                                 }}
                                             >
-                                                <div className="text-[clamp(1.25rem,3.75vw,2rem)] font-bold text-foreground/75 tracking-tight group-hover:text-foreground group-focus:text-foreground group-focus-visible:text-foreground transition-colors duration-200 min-h-[1.5em] flex items-center overflow-hidden">
+                                                <div className="pointer-events-auto text-[clamp(1.25rem,3.75vw,2rem)] font-bold text-foreground/75 tracking-tight hover:text-foreground group-focus:text-foreground group-focus-visible:text-foreground transition-colors duration-200 min-h-[1.5em] flex items-center overflow-hidden">
                                                     <MorphingLabel
                                                         text={t(currentMenu.exploreActionKey)}
                                                         layoutIdPrefix="action-explore"
@@ -580,7 +590,8 @@ export function Navbar() {
                                                             "group block w-fit",
                                                             "py-1 px-2 -mx-2 rounded-full",
                                                             "outline-none focus:bg-white/20 focus-visible:bg-white/20",
-                                                            "transition-all duration-200"
+                                                            // Padded box + focus pill unchanged; only the label takes pointer events.
+                                                            "transition-all duration-200 pointer-events-none"
                                                         )}
                                                         onKeyDown={(e) => handleDropdownKeyDown(e, index, activeMenu!)}
                                                         onBlur={(e) => {
@@ -593,7 +604,7 @@ export function Navbar() {
                                                             }
                                                         }}
                                                     >
-                                                        <div className="text-[clamp(0.8125rem,2.5vw,1rem)] font-medium text-foreground/75 group-hover:text-foreground group-focus:text-foreground group-focus-visible:text-foreground transition-colors duration-200 flex items-center overflow-hidden h-6">
+                                                        <div className="pointer-events-auto text-[clamp(0.8125rem,2.5vw,1rem)] font-medium text-foreground/75 hover:text-foreground group-focus:text-foreground group-focus-visible:text-foreground transition-colors duration-200 flex items-center overflow-hidden h-6">
                                                             <MorphingLabel
                                                                 text={t(`menu.${itemKey}`)}
                                                                 layoutIdPrefix={`item-${index}`}

@@ -4,6 +4,7 @@ import { getMessages, setRequestLocale } from 'next-intl/server';
 import { Inter } from 'next/font/google';
 import { notFound } from 'next/navigation';
 import { routing } from '@/i18n/routing';
+import { SITE_URL } from '@/lib/site';
 import '../globals.css';
 
 const inter = Inter({
@@ -50,7 +51,7 @@ export async function generateMetadata({
     : routing.defaultLocale;
 
   return {
-    metadataBase: new URL('https://nicolasbrito.com'),
+    metadataBase: new URL(SITE_URL),
     title: {
       template: '%s | Nicolas Brito',
       default: SITE_TITLE,

@@ -474,7 +474,11 @@ export function GamesSection() {
           aria-label={t("section_title")}
         >
           <div className="sr-only" role="status" aria-live="polite" aria-atomic="true">
-            {t("progress.status", { current: currentIndex + 1, total: GAMES.length })}
+            {t("progress.status", {
+              current: currentIndex + 1,
+              total: GAMES.length,
+              title: t(`items.${GAMES[currentIndex].id}.title`),
+            })}
           </div>
           {containerWidth > 0 && (
             <motion.div

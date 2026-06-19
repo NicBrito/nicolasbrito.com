@@ -293,10 +293,10 @@ export function HamburgerMenu() {
         type="button"
         aria-label={isOpen ? t("hamburger.close") : t("hamburger.open")}
         aria-expanded={isOpen}
-        className={`touch-menu-trigger relative z-60 ml-auto flex items-center justify-center size-10 -mr-2 rounded-full text-foreground/90 hover:text-foreground outline-none transition-colors duration-200 ${isKeyboardNavigation ? "focus-visible:bg-white/20" : ""}`}
+        className={`touch-menu-trigger relative z-60 ml-auto flex items-center justify-center size-10 -mr-2 rounded-full outline-none transition-colors duration-200 pointer-events-none ${isKeyboardNavigation ? "focus-visible:bg-white/20" : ""}`}
         onClick={handleTriggerClick}
       >
-        <div className="touch-hamburger-glyph relative w-5.5 h-4.5">
+        <div className="touch-hamburger-glyph relative w-5.5 h-4.5 pointer-events-auto text-foreground/90 hover:text-foreground transition-colors duration-200">
           <motion.span
             className="absolute left-0 w-full h-[1.75px] bg-current rounded-full"
             animate={{
@@ -385,8 +385,7 @@ export function HamburgerMenu() {
                             },
                           }
                   }
-                  className={`flex items-center justify-center size-10 -ml-2 rounded-full outline-none transition-colors duration-200 text-foreground/80 hover:text-foreground ${isKeyboardNavigation ? "focus-visible:bg-white/20" : ""}`}
-                  style={{ pointerEvents: activeSubmenu && !isClosing ? "auto" : "none" }}
+                  className={`flex items-center justify-center size-10 -ml-2 rounded-full outline-none transition-colors duration-200 pointer-events-none ${isKeyboardNavigation ? "focus-visible:bg-white/20" : ""}`}
                   onClick={goBack}
                 >
                   <svg
@@ -394,7 +393,8 @@ export function HamburgerMenu() {
                     height="22"
                     viewBox="0 0 18 18"
                     fill="none"
-                    className="touch-back-icon stroke-current"
+                    className="touch-back-icon stroke-current text-foreground/80 hover:text-foreground transition-colors duration-200"
+                    style={{ pointerEvents: activeSubmenu && !isClosing ? "auto" : "none" }}
                     strokeWidth="1.6"
                     strokeLinecap="round"
                     strokeLinejoin="round"

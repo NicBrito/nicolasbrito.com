@@ -5,6 +5,24 @@ decision. Record *why*, not just *what* — the code already shows the *what*.
 
 ---
 
+## 2026-07-06 — Commit, merge & branch governance
+
+**Decision:** Formalized the repo's Git conventions in `.ai/rules/core.md` (Language &
+Version Control Protocol): commits are `type(scope): subject` + a concise bullet body of
+the main changes (clean, direct, brief); branches integrate via MERGE COMMITS only —
+never squash/rebase — so the full commit history is preserved from branch to `main`;
+branch names use a Conventional-Commits prefix + kebab scope (`feat/…`, `fix/…`,
+`docs/…`, `chore/…`, `refactor/…`, `test/…`, `perf/…`); a temporary branch is deleted
+once its PR merges. (The no-AI-attribution rule logged above is part of the same protocol.)
+
+**Why:** GitHub previously allowed squash and rebase merging (both collapse/rewrite
+history) with auto-delete off and no branch-naming convention. Codifying the rules AND
+aligning the GitHub PR settings — merge-commits only, auto-delete head branches, auto-merge
+off — makes history preservation and repo hygiene enforceable, not merely disciplined.
+
+**Re-trigger:** Revisit only if the project moves to a multi-contributor or
+linear-history/squash workflow (would require re-enabling squash/rebase and rewriting this rule).
+
 ## 2026-07-06 — No AI attribution in commit messages
 
 **Decision:** Commit messages carry no AI-authorship trailer or credit — no

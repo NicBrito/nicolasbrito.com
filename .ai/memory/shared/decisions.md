@@ -5,6 +5,12 @@ decision. Record *why*, not just *what* — the code already shows the *what*.
 
 ---
 
+## 2026-07-06 — Repository audit #2 (read-only, orchestrated, baseline-reconciled)
+
+**Decision:** A second full audit ran at HEAD b92ad03 via the orchestrator dispatching 7 specialist lanes in parallel, verifying every 2026-06-17 baseline finding and sweeping for new issues. Report: `docs/audit-2026-07-06.md`.
+
+**Why / durable facts:** 0 baseline regressions; 28/42 baseline findings Fixed/Closed, 14 Open (11 actionable deferred + SEC-3/META-5/DESIGN-1 standing dispositions). 13 new findings (1 S1, 5 S2, 7 S3), headline: undocumented commit b92ad03 shrank tap targets to the WCAG 2.5.8 floor (HamburgerMenu ~28×24px) with zero test coverage over the pointer-events rework; SocialLink + ProjectCard hover motion still ungated by useReducedMotion; docs drift (README assets, stale test counts/versions). Security green (2 moderate accepted), tests 86/86 with coverage tooling working (~17.8%). DESIGN-1 (tuned springs vs constant-duration) remains an unresolved owner decision. Remediation is planned as 4 gated waves in the report; Wave 1 (hit areas, reduced-motion gates, doc refresh) recommended first. See [[patterns]].
+
 ## 2026-06-18 — Deep second pass (Wave 3): new findings, safe fixes
 
 **Decision:** Original Waves 0–2 backlog exhausted, so 3 specialists ran a fresh READ-ONLY deep

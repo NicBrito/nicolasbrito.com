@@ -5,6 +5,21 @@ decision. Record *why*, not just *what* — the code already shows the *what*.
 
 ---
 
+## 2026-07-06 — No AI attribution in commit messages
+
+**Decision:** Commit messages carry no AI-authorship trailer or credit — no
+`Co-Authored-By:` line naming an AI (e.g. Claude), no "Generated with…" note.
+Every commit is authored solely by Nicolas. Codified in `.ai/rules/core.md`
+(Language & Version Control Protocol).
+
+**Why:** Consistency with the established history (every commit before this one
+follows the pattern) and Nicolas's sole authorship of the public portfolio. The
+2026-07-06 audit commit initially carried a `Co-Authored-By: Claude Fable 5`
+trailer that broke the pattern; it was amended out before merge and the rule
+codified here.
+
+**Re-trigger:** Only if Nicolas later decides to credit tooling explicitly.
+
 ## 2026-07-06 — Repository audit #2 (read-only, orchestrated, baseline-reconciled)
 
 **Decision:** A second full audit ran at HEAD b92ad03 via the orchestrator dispatching 7 specialist lanes in parallel, verifying every 2026-06-17 baseline finding and sweeping for new issues. Report: `docs/audit-2026-07-06.md`.

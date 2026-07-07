@@ -21,9 +21,11 @@ them forever.
 ## Read protocol
 
 * **Every agent, before exploring:** read the `shared/` file(s) relevant to its domain
-  (the `orchestrator` reads `decisions.md`; `frontend-architect` reads `patterns.md` +
-  `glossary.md`; etc.). Trust shared memory, but if it names a file/symbol, verify it
-  still exists before acting — memory reflects what was true when written.
+  (the `orchestrator` reads the **Active Decisions digest** at the top of `decisions.md`
+  — the full entries and archive are deep-dive material, not the per-dispatch read;
+  `frontend-architect` reads `patterns.md` + `glossary.md`; etc.). Trust shared memory,
+  but if it names a file/symbol, verify it still exists before acting — memory reflects
+  what was true when written.
 
 ## Write protocol
 
@@ -36,9 +38,16 @@ them forever.
   transient state never belong in `shared/`.
 * The **`docs-scribe`** agent owns shared-memory hygiene; any agent may append, but
   `docs-scribe` curates and de-duplicates.
+* **Bounded decision log.** `decisions.md` opens with an *Active Decisions* digest
+  (≤300 words; every in-force decision as a one-line operative summary) that
+  `docs-scribe` maintains with each new entry. **Collapse trigger:** once a wave/audit
+  entry's `docs/audit-*.md` report exists and all its items are closed or re-tracked
+  there, collapse the entry to a ≤40-word stub and relocate its full text **verbatim**
+  to `shared/decisions-archive.md`. Archiving relocates history, never deletes it.
 
 ## Files
 
-* [`shared/decisions.md`](./shared/decisions.md) — architecture decision log (newest first).
+* [`shared/decisions.md`](./shared/decisions.md) — architecture decision log (digest + newest first, bounded).
+* [`shared/decisions-archive.md`](./shared/decisions-archive.md) — verbatim full text of collapsed entries.
 * [`shared/patterns.md`](./shared/patterns.md) — recurring, verified code patterns.
 * [`shared/glossary.md`](./shared/glossary.md) — project + orchestration vocabulary.

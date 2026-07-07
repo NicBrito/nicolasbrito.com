@@ -7,7 +7,7 @@ memory:
   write: [shared, private]
 tools: [Read, Edit, Grep, Glob]
 model:
-  claude: claude-sonnet-4-6
+  claude: claude-sonnet-5
   gemini: Gemini 3 Flash (mid tier)
   gpt: GPT (mid tier)
 ---

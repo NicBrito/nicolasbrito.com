@@ -7,18 +7,20 @@ recommendation, the role prose is model-neutral.
 
 ## Roster
 
-| Agent | Role | Rules loaded | Model tier |
-| --- | --- | --- | --- |
-| [`orchestrator`](./orchestrator.md) | Conductor — decompose, route, budget, aggregate | core | top |
-| [`frontend-architect`](./frontend-architect.md) | UI/UX implementation, design system | core, stack, design, architecture | top |
-| [`performance-engineer`](./performance-engineer.md) | Time/space, bundle, render cost | core, stack, architecture | top |
-| [`token-economist`](./token-economist.md) | Orchestration & context efficiency (meta) | core | mid |
-| [`test-engineer`](./test-engineer.md) | Vitest/RTL coverage, determinism | core, stack, testing | mid |
-| [`security-analyst`](./security-analyst.md) | Zero-trust, validation, crypto, RBAC, deps | core, security, architecture | top |
-| [`i18n-a11y-steward`](./i18n-a11y-steward.md) | en/pt parity, WCAG AA | core, stack, design | cheap |
-| [`docs-scribe`](./docs-scribe.md) | docs/ + shared-memory curation | core | cheap |
+| Agent | Role | Model tier |
+| --- | --- | --- |
+| [`orchestrator`](./orchestrator.md) | Conductor — decompose, route, budget, aggregate | top |
+| [`frontend-architect`](./frontend-architect.md) | UI/UX implementation, design system | top |
+| [`performance-engineer`](./performance-engineer.md) | Time/space, bundle, render cost | top |
+| [`token-economist`](./token-economist.md) | Orchestration & context efficiency (meta) | mid |
+| [`test-engineer`](./test-engineer.md) | Vitest/RTL coverage, determinism | mid |
+| [`security-analyst`](./security-analyst.md) | Zero-trust, validation, crypto, RBAC, deps | top |
+| [`i18n-a11y-steward`](./i18n-a11y-steward.md) | en/pt parity, WCAG AA | cheap |
+| [`docs-scribe`](./docs-scribe.md) | docs/ + shared-memory curation | cheap |
 
-No agent loads all six rule modules — that subset *is* the token optimization.
+Each charter's `rules:` frontmatter is the canonical (and only) statement of which rule
+modules it loads — see the routing view in [`../orchestration.md`](../orchestration.md).
+No agent loads all six modules — that subset *is* the token optimization.
 
 ## How to invoke
 

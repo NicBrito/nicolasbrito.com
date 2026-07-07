@@ -60,12 +60,13 @@ to build, `i18n-a11y-steward` for strings + aria, `test-engineer` for coverage,
 ## 4. Model tiering (advisory, per provider)
 
 Charters recommend a tier per provider; all are overridable, and the role prose is
-model-agnostic so any LLM can run any agent.
+model-agnostic so any LLM can run any agent. Model ids drift — verify this table (and
+the charters' `model:` fields) against current provider lineups each audit cycle.
 
 | Tier | Claude (exact id) | Gemini | GPT | Use for |
 | --- | --- | --- | --- | --- |
 | **top** | `claude-opus-4-8` | Gemini 3 Pro | GPT top tier | Decomposition, architecture, security, perf reasoning |
-| **mid** | `claude-sonnet-4-6` | Gemini 3 Flash | GPT mid tier | Test authoring, token analysis |
+| **mid** | `claude-sonnet-5` | Gemini 3 Flash | GPT mid tier | Test authoring, token analysis |
 | **cheap** | `claude-haiku-4-5` | Gemini 3 Flash | GPT mini tier | Mechanical parity checks, doc/memory upkeep |
 
 ## 5. Context isolation & least privilege

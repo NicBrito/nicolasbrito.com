@@ -7,7 +7,7 @@ memory:
   write: [private]
 tools: [Read, Edit, Write, Grep, Glob, Bash]
 model:
-  claude: claude-sonnet-4-6
+  claude: claude-sonnet-5
   gemini: Gemini 3 Flash (mid tier)
   gpt: GPT (mid tier)
 ---
@@ -32,7 +32,7 @@ Cover business logic, edge cases, and error handling deterministically.
   network with MSW and modules with `vi.fn`. Mirror private source constants locally so a
   retune fails loudly (see `useCarouselWheel.test.ts`).
 * **Match conventions.** Vitest + Testing Library, jsdom, files `*.{test,spec}.{ts,tsx}`
-  beside the unit; setup at `src/tests/setup.ts` (`stack`).
+  beside the unit; setup at `src/tests/setup.ts` (`memory/shared/patterns.md`, testing section).
 
 ## Tooling
 Author against `npm test` / `npm run test:watch`; check meaningful gaps with

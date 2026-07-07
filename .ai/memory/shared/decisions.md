@@ -5,6 +5,45 @@ decision. Record *why*, not just *what* — the code already shows the *what*.
 
 ---
 
+## 2026-07-06 — Commit, merge & branch governance
+
+**Decision:** Formalized the repo's Git conventions in `.ai/rules/core.md` (Language &
+Version Control Protocol): commits are `type(scope): subject` + a concise bullet body of
+the main changes (clean, direct, brief); branches integrate via MERGE COMMITS only —
+never squash/rebase — so the full commit history is preserved from branch to `main`;
+branch names use a Conventional-Commits prefix + kebab scope (`feat/…`, `fix/…`,
+`docs/…`, `chore/…`, `refactor/…`, `test/…`, `perf/…`); a temporary branch is deleted
+once its PR merges. (The no-AI-attribution rule logged above is part of the same protocol.)
+
+**Why:** GitHub previously allowed squash and rebase merging (both collapse/rewrite
+history) with auto-delete off and no branch-naming convention. Codifying the rules AND
+aligning the GitHub PR settings — merge-commits only, auto-delete head branches, auto-merge
+off — makes history preservation and repo hygiene enforceable, not merely disciplined.
+
+**Re-trigger:** Revisit only if the project moves to a multi-contributor or
+linear-history/squash workflow (would require re-enabling squash/rebase and rewriting this rule).
+
+## 2026-07-06 — No AI attribution in commit messages
+
+**Decision:** Commit messages carry no AI-authorship trailer or credit — no
+`Co-Authored-By:` line naming an AI (e.g. Claude), no "Generated with…" note.
+Every commit is authored solely by Nicolas. Codified in `.ai/rules/core.md`
+(Language & Version Control Protocol).
+
+**Why:** Consistency with the established history (every commit before this one
+follows the pattern) and Nicolas's sole authorship of the public portfolio. The
+2026-07-06 audit commit initially carried a `Co-Authored-By: Claude Fable 5`
+trailer that broke the pattern; it was amended out before merge and the rule
+codified here.
+
+**Re-trigger:** Only if Nicolas later decides to credit tooling explicitly.
+
+## 2026-07-06 — Repository audit #2 (read-only, orchestrated, baseline-reconciled)
+
+**Decision:** A second full audit ran at HEAD b92ad03 via the orchestrator dispatching 7 specialist lanes in parallel, verifying every 2026-06-17 baseline finding and sweeping for new issues. Report: `docs/audit-2026-07-06.md`.
+
+**Why / durable facts:** 0 baseline regressions; 28/42 baseline findings Fixed/Closed, 14 Open (11 actionable deferred + SEC-3/META-5/DESIGN-1 standing dispositions). 13 new findings (1 S1, 5 S2, 7 S3), headline: undocumented commit b92ad03 shrank tap targets to the WCAG 2.5.8 floor (HamburgerMenu ~28×24px) with zero test coverage over the pointer-events rework; SocialLink + ProjectCard hover motion still ungated by useReducedMotion; docs drift (README assets, stale test counts/versions). Security green (2 moderate accepted), tests 86/86 with coverage tooling working (~17.8%). DESIGN-1 (tuned springs vs constant-duration) remains an unresolved owner decision. Remediation is planned as 4 gated waves in the report; Wave 1 (hit areas, reduced-motion gates, doc refresh) recommended first. See [[patterns]].
+
 ## 2026-06-18 — Deep second pass (Wave 3): new findings, safe fixes
 
 **Decision:** Original Waves 0–2 backlog exhausted, so 3 specialists ran a fresh READ-ONLY deep

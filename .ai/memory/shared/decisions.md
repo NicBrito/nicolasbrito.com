@@ -5,6 +5,14 @@ decision. Record *why*, not just *what* — the code already shows the *what*.
 
 ---
 
+## 2026-07-06 — Token-efficiency audit of the .ai/ system
+
+**Decision:** The token-economist audited the .ai/ system's token economy (read-only) at HEAD be48b61. Report + 3-wave optimization plan: `docs/token-efficiency-audit-2026-07-06.md`. Deliberately short entry — the audit's top finding (TOK-8/S1) is that this file is read in full by the orchestrator every dispatch and needs a digest + archive protocol.
+
+**Why:** Always-on floor ≈2,177 tokens; orchestrator load ≈3,957 tokens/dispatch and growing with this file. 13 findings (1 S1, 5 S2, 7 S3), zero directives proposed for deletion that any agent can act on. External optimizer tools reviewed and parked (client-side; this system optimizes at the architecture layer).
+
+**Re-trigger:** Adopt measurement tooling only if the system outgrows static wc/grep auditing.
+
 ## 2026-07-06 — Commit, merge & branch governance
 
 **Decision:** Formalized the repo's Git conventions in `.ai/rules/core.md` (Language &

@@ -50,6 +50,7 @@ src/
 
 ### 5.1. Security & HTTPS
 * Implementation of native Next.js HTTPS (`--experimental-https`) to run `localhost` with real HTTPS, eliminating custom server configurations while enabling faithful testing of secure APIs and browser features.
+* The security headers (CSP, HSTS, and the rest of the set) are single-sourced from `src/lib/security-headers.ts` and emitted twice — through `next.config.ts` for page and asset responses, and through the `src/proxy.ts` middleware so that locale redirects carry them as well.
 
 ### 5.2. Quality Pipeline
 * **Unit Testing:** Vitest configuration (`vitest.config.ts`) with JSDOM environment.

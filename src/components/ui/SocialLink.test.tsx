@@ -1,20 +1,33 @@
 import { render, screen } from "@testing-library/react";
 import type { AnchorHTMLAttributes, ReactNode } from "react";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { SocialLink } from "./SocialLink";
 
 // ---------------------------------------------------------------------------
 // framer-motion mock — renders plain <a> elements and strips animation props.
+// `mockUseReducedMotion` defaults to false (motion enabled) so every existing
+// test below renders through the exact reduced=false path it always has;
+// individual tests opt into the reduced=true path via
+// `mockUseReducedMotion.mockReturnValue(true)`. `capturedMotionAProps`
+// exposes the whileHover/whileFocus targets the real <motion.a> received —
+// they are stripped before hitting the DOM, so this is the only way to
+// inspect them.
 // ---------------------------------------------------------------------------
 
 type MockMotionAnchorProps = {
   children: ReactNode;
 } & AnchorHTMLAttributes<HTMLAnchorElement>;
 
+const { mockUseReducedMotion, capturedMotionAProps } = vi.hoisted(() => ({
+  mockUseReducedMotion: vi.fn(() => false),
+  capturedMotionAProps: { current: null as Record<string, unknown> | null },
+}));
+
 vi.mock("framer-motion", () => ({
   motion: {
     a: ({ children, ...props }: MockMotionAnchorProps) => {
+      capturedMotionAProps.current = props as Record<string, unknown>;
       const domProps = { ...props } as Record<string, unknown>;
       delete domProps.whileTap;
       delete domProps.whileHover;
@@ -23,6 +36,7 @@ vi.mock("framer-motion", () => ({
       return <a {...(domProps as AnchorHTMLAttributes<HTMLAnchorElement>)}>{children}</a>;
     },
   },
+  useReducedMotion: mockUseReducedMotion,
 }));
 
 const MOCK_ICON = <span data-testid="mock-icon">📱</span>;
@@ -32,6 +46,13 @@ const MOCK_ICON = <span data-testid="mock-icon">📱</span>;
 // ---------------------------------------------------------------------------
 
 describe("SocialLink", () => {
+  afterEach(() => {
+    // Reset shared mock state so the reduced=true opt-in below never leaks
+    // into the reduced=false tests pinned above (or any test added later).
+    mockUseReducedMotion.mockReturnValue(false);
+    capturedMotionAProps.current = null;
+  });
+
   it("RENDERS LINK WITH CORRECT HREF", () => {
     // Arrange
     // Act
@@ -233,5 +254,18 @@ describe("SocialLink", () => {
     const link = container.querySelector("a");
     expect(link).toHaveClass("focus-visible:ring-2");
     expect(link).toHaveClass("focus-visible:ring-accent");
+  });
+
+  it("NEUTRALIZES HOVER AND FOCUS SCALE ANIMATIONS WHEN REDUCED MOTION IS PREFERRED", () => {
+    // Arrange
+    mockUseReducedMotion.mockReturnValue(true);
+    const inertAnimation = { scale: 1, transition: { duration: 0.2, ease: "easeOut" } };
+
+    // Act
+    render(<SocialLink href="https://linkedin.com" icon={MOCK_ICON} label="LinkedIn" />);
+
+    // Assert
+    expect(capturedMotionAProps.current?.whileHover).toEqual(inertAnimation);
+    expect(capturedMotionAProps.current?.whileFocus).toEqual(inertAnimation);
   });
 });

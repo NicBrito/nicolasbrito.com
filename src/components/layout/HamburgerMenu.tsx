@@ -293,10 +293,16 @@ export function HamburgerMenu() {
         type="button"
         aria-label={isOpen ? t("hamburger.close") : t("hamburger.open")}
         aria-expanded={isOpen}
-        className={`touch-menu-trigger relative z-60 ml-auto flex items-center justify-center size-10 -mr-2 rounded-full outline-none transition-colors duration-200 pointer-events-none ${isKeyboardNavigation ? "focus-visible:bg-white/20" : ""}`}
+        className={`touch-menu-trigger relative z-60 ml-auto flex items-center justify-center size-10 -mr-2 rounded-full outline-none transition-colors duration-200 ${isKeyboardNavigation ? "focus-visible:bg-white/20" : ""}`}
         onClick={handleTriggerClick}
       >
-        <div className="touch-hamburger-glyph relative w-5.5 h-4.5 pointer-events-auto text-foreground/90 hover:text-foreground transition-colors duration-200">
+        {/* Apple HIG 44x44pt minimum. The painted button stays 40x40; this
+            invisible ring widens the hit area by 2px on every side (44x44)
+            without changing a single rendered pixel. It is rendered before the
+            glyph so the glyph — a positioned sibling — still paints on top and
+            keeps its own :hover colour transition. */}
+        <span aria-hidden="true" className="absolute -inset-0.5" />
+        <div className="touch-hamburger-glyph relative w-5.5 h-4.5 text-foreground/90 hover:text-foreground transition-colors duration-200">
           <motion.span
             className="absolute left-0 w-full h-[1.75px] bg-current rounded-full"
             animate={{
@@ -351,6 +357,10 @@ export function HamburgerMenu() {
                   tabIndex={activeSubmenu && !isClosing ? 0 : -1}
                   initial={false}
                   animate={
+                    // prefers-reduced-motion: strip the blur and the directional
+                    // x/y slide from the back button's enter/exit so it only
+                    // fades. Opacity, durations, delays and easings are
+                    // untouched — same treatment as the itemMotion gate above.
                     activeSubmenu && !isClosing
                       ? {
                           opacity: 1,
@@ -367,8 +377,8 @@ export function HamburgerMenu() {
                         ? {
                             opacity: 0,
                             x: 0,
-                            y: -18,
-                            filter: "blur(4px)",
+                            y: reduced ? 0 : -18,
+                            filter: reduced ? "blur(0px)" : "blur(4px)",
                             transition: {
                               duration: 0.18,
                               ease: [0.42, 0, 1, 1],
@@ -376,25 +386,29 @@ export function HamburgerMenu() {
                           }
                         : {
                             opacity: 0,
-                            x: 16,
+                            x: reduced ? 0 : 16,
                             y: 0,
-                            filter: "blur(4px)",
+                            filter: reduced ? "blur(0px)" : "blur(4px)",
                             transition: {
                               duration: direction === "backward" ? 0.28 : 0,
                               ease: [0.42, 0, 1, 1],
                             },
                           }
                   }
-                  className={`flex items-center justify-center size-10 -ml-2 rounded-full outline-none transition-colors duration-200 pointer-events-none ${isKeyboardNavigation ? "focus-visible:bg-white/20" : ""}`}
+                  className={`relative flex items-center justify-center size-10 -ml-2 rounded-full outline-none transition-colors duration-200 ${isKeyboardNavigation ? "focus-visible:bg-white/20" : ""}`}
+                  style={{ pointerEvents: activeSubmenu && !isClosing ? "auto" : "none" }}
                   onClick={goBack}
                 >
+                  {/* Apple HIG 44x44pt minimum — see the trigger above. Rendered
+                      before the icon; the icon is `relative` so it still paints
+                      on top and keeps its :hover colour transition. */}
+                  <span aria-hidden="true" className="absolute -inset-0.5" />
                   <svg
                     width="22"
                     height="22"
                     viewBox="0 0 18 18"
                     fill="none"
-                    className="touch-back-icon stroke-current text-foreground/80 hover:text-foreground transition-colors duration-200"
-                    style={{ pointerEvents: activeSubmenu && !isClosing ? "auto" : "none" }}
+                    className="touch-back-icon relative stroke-current text-foreground/80 hover:text-foreground transition-colors duration-200"
                     strokeWidth="1.6"
                     strokeLinecap="round"
                     strokeLinejoin="round"

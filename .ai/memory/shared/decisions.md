@@ -12,13 +12,13 @@ per the protocol in [`../README.md`](../README.md).
 * **Git governance** (2026-07-06, `core.md` VCS Protocol): commits `type(scope): subject`
   + concise bullet body; **no AI attribution ever**; MERGE COMMITS only (never
   squash/rebase); branches `<type>/kebab-scope`; temporary branch deleted on merge.
-* **Open remediation — repo audit #2** (`docs/audit-2026-07-06.md`): 4 waves pending;
-  Wave 1 = hit-area restore + reduced-motion gates (SocialLink, ProjectCard,
-  HamburgerMenu back-button) + doc refresh.
+* **Repo audit #2**: Wave 1 done 2026-08-07 (HIG hamburger hit areas, motion gates complete, docs drift cleared; NEW-13 pre-closed by PR #3); Waves 2 regression-net / 3 perf / 4 motion-internals pending (`docs/audit-2026-07-06.md`).
 * **Open optimization — token audit** (`docs/token-efficiency-audit-2026-07-06.md`):
   Wave 1 done (this log); Wave 2 = `rules/git.md` extraction + docs pointers + src
   index; Wave 3 owner-gated.
-* **DESIGN-1 OPEN** (owner call): tuned carousel springs vs the constant-duration rule.
+* **DESIGN-1 CLOSED** (2026-08-07): tuned springs ratified for gesture/physics-driven interactions; constant-duration beziers remain the entry/transition rule.
+* **Hit-area policy** (2026-08-07): interactive == visual bounds for pointer controls, floor 24×24 px (WCAG 2.5.8); hamburger touch controls ≥44×44 px (Apple HIG) via invisible extensions.
+* **Stack & hosting** (2026-08-07): Next.js-only single stack (unlocks TOK-2); Vercel stays, Cloudflare parked (re-trigger: backend services or outgrows static hosting).
 * **SEC-3 accepted:** 2 moderate postcss-in-next advisories (build-time only; clears
   when Next re-pins). **SEC-5 pending:** HSTS-preload submission = owner action.
   **META-5 won't-fix:** adapters keep short inline summaries.
@@ -36,6 +36,52 @@ per the protocol in [`../README.md`](../README.md).
   (never hardcode); pre-commit `npm test` + commitlint; dev serves HTTPS.
 
 ---
+
+## 2026-08-07 — Hit-area policy: pointer precision with a HIG touch exception (D1; closes NEW-1/NEW-2/NEW-12)
+
+**Decision:** For pointer-driven controls (nav pills, dropdown labels) the interactive
+area equals the visual bounds, pixel-perfect — the `b92ad03` pointer-events split is
+ratified and NEW-2 is ACCEPTED — subject to a hard floor of 24×24 CSS px (WCAG 2.5.8 AA)
+that no visual bound may undercut. Exception (NEW-1, FIXED this wave): the hamburger
+menu's touch controls — trigger and back button — follow Apple HIG with an interactive
+target ≥44×44 px, delivered by invisible absolutely-positioned hit-area extensions inside
+each button; rendered visuals (glyph size, focus ring, spacing) stay byte-identical.
+Retroactive entry for `b92ad03` (NEW-12), which also carried unlogged fixes: SocialLink
+`noopener`, localized `aria_label`, `SITE_URL` DRY, carousel status/title.
+
+**Why:** Pointers reward precision — clicks outside the visible pill should not
+activate; thumbs need area, and 24×24 is a floor, not a target, for touch. Splitting the
+policy by input modality serves both without visual compromise.
+
+## 2026-08-07 — DESIGN-1 CLOSED: tuned springs ratified for gesture-driven motion (D2)
+
+**Decision:** Explicitly-tuned springs (custom `stiffness`/`damping`, e.g. the games
+carousel's `CARD_SPRING`/`btnSpring`) are ratified for physics/gesture-driven
+interactions; constant-duration custom cubic-bezier easing remains the rule for
+entry/transition motion. `stack.md` already encodes this split — no code change; this
+entry closes the item.
+
+**Why:** Gesture-driven motion answers to finger velocity, which a clock cannot express;
+scripted entries stay deterministic. Last open decision from audit #1.
+
+## 2026-08-07 — Stack scope: Next.js-only, single-stack (D3)
+
+**Decision:** This repository is and stays Next.js-only — a single stack of
+best-in-class web technologies; no secondary frameworks or parallel stacks. Unlocks
+TOK-2 (token Wave 3): non-Next guidance may be pruned from always-on rules.
+
+**Why:** One deployment target; speculative multi-stack guidance costs tokens on every
+dispatch and hedges against a future the owner has ruled out.
+
+## 2026-08-07 — Hosting: Vercel stays; Cloudflare parked (D4)
+
+**Decision:** Hosting remains Vercel free tier (auto-deploy `main`, per-PR previews).
+Cloudflare migration is parked.
+
+**Why:** Integrated PR previews and zero-config Next.js deployment outweigh portability
+while the site is fully static.
+
+**Re-trigger:** the repo gains backend services or outgrows static hosting.
 
 ## 2026-07-06 — Token-efficiency Wave 1: bounded decision log
 

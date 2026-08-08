@@ -1,6 +1,6 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import type { AnchorHTMLAttributes, HTMLAttributes, ReactNode } from "react";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { ProjectCard } from "./ProjectCard";
 
 type MockNextImageProps = {
@@ -74,11 +74,26 @@ vi.mock("@/components/ui/SecondaryButton", () => ({
 // Prevents jsdom warnings:
 //   "Received `true` for a non-boolean attribute `layout`."
 //   "Unknown event handler property `onHoverEnd`. It will be ignored."
+// `mockUseReducedMotion` defaults to false (motion enabled) so every existing
+// test below renders through the exact reduced=false path it always has;
+// individual tests opt into the reduced=true path via
+// `mockUseReducedMotion.mockReturnValue(true)`. The card root's `animate`
+// value is stripped before hitting the DOM like the rest, so it is
+// re-surfaced as `data-motion-animate` (root wrapper only, identified by its
+// unique "project-card" class) purely for that gate assertion.
 // ---------------------------------------------------------------------------
+const { mockUseReducedMotion } = vi.hoisted(() => ({
+  mockUseReducedMotion: vi.fn(() => false),
+}));
+
 vi.mock("framer-motion", () => ({
   motion: {
     div: ({ children, ...props }: MockMotionDivProps) => {
       const domProps = { ...props } as Record<string, unknown>;
+      const isCardRoot =
+        typeof domProps.className === "string" &&
+        domProps.className.split(" ").includes("project-card");
+      const animateValue = domProps.animate;
       delete domProps.layout;
       delete domProps.variants;
       delete domProps.initial;
@@ -92,10 +107,20 @@ vi.mock("framer-motion", () => ({
       delete domProps.onHoverStart;
       delete domProps.onHoverEnd;
 
-      return <div {...(domProps as HTMLAttributes<HTMLDivElement>)}>{children}</div>;
+      return (
+        <div
+          {...(domProps as HTMLAttributes<HTMLDivElement>)}
+          {...(isCardRoot
+            ? { "data-motion-animate": animateValue === undefined ? "none" : String(animateValue) }
+            : {})}
+        >
+          {children}
+        </div>
+      );
     },
   },
   AnimatePresence: ({ children }: MockAnimatePresenceProps) => <div>{children}</div>,
+  useReducedMotion: mockUseReducedMotion,
 }));
 
 const DEFAULT_PROPS = {
@@ -107,6 +132,12 @@ const DEFAULT_PROPS = {
 };
 
 describe("ProjectCard", () => {
+  afterEach(() => {
+    // Reset shared mock state so the reduced=true opt-in below never leaks
+    // into the reduced=false tests pinned above (or any test added later).
+    mockUseReducedMotion.mockReturnValue(false);
+  });
+
   it("RENDERS CARD WITH TITLE AND DESCRIPTION", () => {
     // Arrange
     // Act
@@ -322,5 +353,20 @@ describe("ProjectCard", () => {
 
     expect(viewCaseLink).not.toHaveAttribute("tabindex", "-1");
     expect(visitSiteLink).not.toHaveAttribute("tabindex", "-1");
+  });
+
+  it("SKIPS THE HOVER ANIMATE VARIANT ON THE ACTIVE CARD WHEN REDUCED MOTION IS PREFERRED", () => {
+    // Arrange
+    mockUseReducedMotion.mockReturnValue(true);
+    const { container } = render(<ProjectCard {...DEFAULT_PROPS} />);
+    const card = container.querySelector(".project-card") as HTMLElement;
+
+    // Act — focus is the one framer-motion interaction prop the mock passes
+    // straight through as a real DOM handler (onHoverStart/onHoverEnd are
+    // Framer-only prop names with no native DOM event to fire in jsdom).
+    fireEvent.focus(card);
+
+    // Assert
+    expect(card).toHaveAttribute("data-motion-animate", "none");
   });
 });

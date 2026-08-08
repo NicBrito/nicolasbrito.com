@@ -4,7 +4,7 @@
 Complete UI reconstruction strictly adhering to the **Apple Design System** (extreme minimalism, San Francisco/Inter typography, Bento Grids, Glassmorphism, and Micro-interactions). The project is built upon a "Bleeding Edge" technical infrastructure, following Senior Software Engineering standards.
 
 ## 2. Tech Stack (Implemented)
-* **Core Framework:** Next.js 16.1.0 (App Router / Turbopack).
+* **Core Framework:** Next.js 16.2.9 (App Router / Turbopack).
 * **Language:** TypeScript (Strict Mode).
 * **Styling:** Tailwind CSS v4 (Configured via native CSS Variables and `@theme` directive).
 * **Internationalization (i18n):** `next-intl` (Supports `/en` and `/pt` routes, automatic detection, and middleware).

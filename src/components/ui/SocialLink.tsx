@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { motion, TargetAndTransition } from "framer-motion";
+import { motion, TargetAndTransition, useReducedMotion } from "framer-motion";
 import { ReactNode } from "react";
 
 export interface SocialLinkProps {
@@ -33,6 +33,16 @@ export function SocialLink({
   target = "_blank",
   rel = "noopener noreferrer",
 }: SocialLinkProps) {
+  const reduced = useReducedMotion();
+
+  // prefers-reduced-motion: neutralize the hover/focus scale pulse (the tap
+  // feedback is untouched) so pointer/keyboard interaction never triggers a
+  // WCAG 2.3.3 motion pulse. reduced=false keeps INTERACTION_ANIMATION as-is,
+  // so whileHover/whileFocus stay byte-identical to today.
+  const interactionAnimation: TargetAndTransition = reduced
+    ? { scale: 1, transition: { duration: 0.2, ease: "easeOut" } }
+    : INTERACTION_ANIMATION;
+
   return (
     <motion.a
       href={href}
@@ -42,8 +52,8 @@ export function SocialLink({
       aria-label={label}
       tabIndex={0}
       whileTap={TAP_ANIMATION}
-      whileHover={INTERACTION_ANIMATION}
-      whileFocus={INTERACTION_ANIMATION}
+      whileHover={interactionAnimation}
+      whileFocus={interactionAnimation}
     >
       <div className="group-hover:scale-110 group-focus-visible:scale-110 transition-transform duration-200 relative z-10">
         {icon}

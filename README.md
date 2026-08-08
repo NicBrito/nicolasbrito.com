@@ -69,13 +69,6 @@ Locales are defined once in [`src/i18n/routing.ts`](src/i18n/routing.ts)
 - Engineering directives: [`.ai/constitution.md`](.ai/constitution.md)
 - Component documentation: [`docs/`](docs/)
 
-## Missing assets
+## PWA & metadata
 
-The metadata in [`src/app/[locale]/layout.tsx`](src/app/[locale]/layout.tsx) and
-[`public/site.webmanifest`](public/site.webmanifest) reference icons that are not
-yet committed. Add the following to `public/` to avoid 404s and enable PWA /
-home-screen icons:
-
-- `apple-touch-icon.png` (180×180)
-- `icon-192x192.png` (192×192)
-- `icon-512x512.png` (512×512)
+PWA icons (`apple-touch-icon.png`, `icon-192x192.png`, `icon-512x512.png`) are committed in `public/` and referenced in `site.webmanifest`.

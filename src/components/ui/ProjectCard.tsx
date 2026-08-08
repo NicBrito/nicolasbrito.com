@@ -4,7 +4,7 @@ import { PrimaryButton } from "@/components/ui/PrimaryButton";
 import { SecondaryButton } from "@/components/ui/SecondaryButton";
 import { NOISE_SVG } from "@/lib/assets";
 import { cn } from "@/lib/utils";
-import { AnimatePresence, motion, Variants } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion, Variants } from "framer-motion";
 import { ImageIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
@@ -80,6 +80,7 @@ export function ProjectCard({
   onHover,
 }: ProjectCardProps) {
   const t = useTranslations(translationNamespace);
+  const reduced = useReducedMotion();
   const hasImage = !!image;
   const [imageStatus, setImageStatus] = useState<'loading' | 'loaded' | 'error'>('loading');
   const imgRef = useRef<HTMLImageElement>(null);
@@ -124,7 +125,10 @@ export function ProjectCard({
     <motion.div
       layout
       variants={variants}
-      animate={isActive ? "hover" : undefined}
+      // prefers-reduced-motion: never switch into the "hover" variant (scale
+      // pulse) on pointer/keyboard interaction; reduced=false keeps this
+      // byte-identical, and entrance/exit variants + timing are untouched.
+      animate={isActive && !reduced ? "hover" : undefined}
       onHoverStart={() => {
         setIsHovered(true);
         if (onHover) onHover();

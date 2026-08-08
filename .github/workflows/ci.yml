@@ -1,0 +1,34 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci
+
+      # No format step here: this repo has no Prettier by design (the owner
+      # may opt in later).
+      - run: npm run lint
+
+      - run: npm run type-check
+
+      # Tests run before build to fail fast on the cheaper gate.
+      - run: npm test
+
+      - run: npm run build

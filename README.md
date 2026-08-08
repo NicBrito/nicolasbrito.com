@@ -39,6 +39,10 @@ locale (`/en`).
 A Husky `pre-commit` hook runs `npm test`, and `commit-msg` enforces
 [Conventional Commits](https://www.conventionalcommits.org/).
 
+## CI
+
+Every pull request and every push to `main` runs the full verification chain — `lint` → `type-check` → `test` → `build` — on GitHub Actions (`.github/workflows/ci.yml`). The `main` branch stays green by construction because a red check blocks the merge. Local Husky hooks are the first line of defense; CI serves as the non-bypassable backstop. Node is pinned via `.nvmrc` (24).
+
 ## Project structure
 
 ```

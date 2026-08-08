@@ -8,6 +8,7 @@
     "start": "next start",
     "clean": "rm -rf node_modules .next coverage",
     "lint": "eslint",
+    "type-check": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
@@ -45,5 +46,8 @@
     "typescript": "^5.0.0",
     "vite-tsconfig-paths": "^5.1.4",
     "vitest": "^3.0.7"
+  },
+  "engines": {
+    "node": ">=24"
   }
 }

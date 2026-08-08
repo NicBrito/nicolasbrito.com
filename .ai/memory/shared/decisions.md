@@ -12,7 +12,7 @@ per the protocol in [`../README.md`](../README.md).
 * **Git governance** (2026-07-06, `core.md` VCS Protocol): commits `type(scope): subject`
   + concise bullet body; **no AI attribution ever**; MERGE COMMITS only (never
   squash/rebase); branches `<type>/kebab-scope`; temporary branch deleted on merge.
-* **Repo audit #2**: Wave 1 done 2026-08-07 (HIG hamburger hit areas, motion gates complete, docs drift cleared; NEW-13 pre-closed by PR #3); Waves 2 regression-net / 3 perf / 4 motion-internals pending (`docs/audit-2026-07-06.md`).
+* **Repo audit #2**: Wave 1 done 2026-08-07 (HIG hamburger hit areas, motion gates complete, docs drift cleared; NEW-13 pre-closed by PR #3; DP-13 closed (footer, 2026-08-08)); Waves 2 regression-net / 3 perf / 4 motion-internals pending (`docs/audit-2026-07-06.md`).
 * **Open optimization — token audit** (`docs/token-efficiency-audit-2026-07-06.md`):
   Wave 1 done (this log); Wave 2 = `rules/git.md` extraction + docs pointers + src
   index; Wave 3 owner-gated.
@@ -20,7 +20,7 @@ per the protocol in [`../README.md`](../README.md).
 * **Hit-area policy** (2026-08-07): interactive == visual bounds for pointer controls, floor 24×24 px (WCAG 2.5.8); hamburger touch controls ≥44×44 px (Apple HIG) via invisible extensions.
 * **Stack & hosting** (2026-08-07): Next.js-only single stack (unlocks TOK-2); Vercel stays, Cloudflare parked (re-trigger: backend services or outgrows static hosting).
 * **SEC-3 accepted:** 2 moderate postcss-in-next advisories (build-time only; clears
-  when Next re-pins). **SEC-5 pending:** HSTS-preload submission = owner action.
+  when Next re-pins). **SEC-5:** preload submitted 2026-08-07, pending inclusion — HSTS directives must never be weakened (single-sourced in `src/lib/security-headers.ts`).
   **META-5 won't-fix:** adapters keep short inline summaries.
 * **Contrast tokens:** `--accent-strong` #0071e3 for white-on-fill; `--accent` #2997ff
   reserved for text-on-dark (6.96:1).
@@ -36,6 +36,21 @@ per the protocol in [`../README.md`](../README.md).
   (never hardcode); pre-commit `npm test` + commitlint; dev serves HTTPS.
 
 ---
+
+## 2026-08-08 — Footer landmark shipped (closes DP-13)
+
+**Decision:** The page's semantic structure is complete: `src/components/layout/Footer.tsx`
+renders the `contentinfo` landmark as a sibling after `<main>` in `page.tsx` — a static
+async server component (no client JS of its own, no entry motion, zero CLS): hairline
+divider (`border-white/5`), name wordmark, the two `SocialLink`s (hrefs single-sourced in
+`src/lib/social.ts`, shared with Hero), and a localized copyright line with dynamic year
+under the new `Footer` namespace (en/pt parity, appended last in both catalogs). Lean v1
+by owner intent; extensions must stay additive (no layout rework).
+
+**Why:** DP-13 was the last missing landmark. A static server-component coda ships zero
+client JS and cannot shift layout; `social.ts` removes the only inline duplication of the
+social profile URLs. The copyright `{year}` freezes at build time under SSG — acceptable
+for a site redeployed on every merge.
 
 ## 2026-08-07 — Hit-area policy: pointer precision with a HIG touch exception (D1; closes NEW-1/NEW-2/NEW-12)
 

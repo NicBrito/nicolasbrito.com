@@ -122,5 +122,12 @@
     "projects": "Projects",
     "games": "Games",
     "blog": "Blog"
+  },
+  "Footer": {
+    "aria_label": "Site footer",
+    "name": "Nicolas Brito",
+    "copyright": "© {year} Nicolas Brito",
+    "linkedin_label": "LinkedIn",
+    "github_label": "GitHub"
   }
 }

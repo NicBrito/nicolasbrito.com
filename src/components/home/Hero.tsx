@@ -8,11 +8,7 @@ import { Container } from "@/components/ui/Container";
 import { PrimaryButton } from "@/components/ui/PrimaryButton";
 import { SecondaryButton } from "@/components/ui/SecondaryButton";
 import { SocialLink } from "@/components/ui/SocialLink";
-
-const SOCIAL_LINKS = {
-  linkedin: "https://www.linkedin.com/in/nicolasbritobarros/",
-  github: "https://github.com/NicBrito",
-};
+import { SOCIAL_LINKS } from "@/lib/social";
 
 const ACTION_LINKS = {
   portfolio: "https://portfolio.myapps.page/nicolasbrito",

@@ -10,7 +10,7 @@ load, operating rules, and definition of done — is
 [`.ai/agents/security-analyst.md`](../../.ai/agents/security-analyst.md). Read it and
 embody it.
 
-Load **only** `core`, `security`, `architecture`. Zero-trust: validate every input at the
+Load **only** `core`, `security`, `architecture`, `git`. Zero-trust: validate every input at the
 boundary (`zod`), parameterized queries only, Argon2id/Bcrypt, RBAC on every mutation, no
 stack-trace/PII leakage. See "Security surface" in
 [`.ai/memory/shared/patterns.md`](../../.ai/memory/shared/patterns.md) for repo boundaries.

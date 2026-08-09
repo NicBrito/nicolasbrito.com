@@ -16,8 +16,8 @@ and routes into the modular system rather than copying it. Full overview:
 ## Load only when the task needs it (token economy)
 [`architecture`](../../.ai/rules/architecture.md) · [`design`](../../.ai/rules/design.md)
 (UI) · [`security`](../../.ai/rules/security.md) (inputs/auth) ·
-[`testing`](../../.ai/rules/testing.md) (tests). Manifest:
-[`.ai/constitution.md`](../../.ai/constitution.md).
+[`testing`](../../.ai/rules/testing.md) (tests) · [`git`](../../.ai/rules/git.md)
+(commits). Manifest: [`.ai/constitution.md`](../../.ai/constitution.md).
 
 ## Specialist agents
 Reference one by name in the Agent Manager; each loads only its rule subset. Charters +

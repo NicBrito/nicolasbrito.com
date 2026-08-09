@@ -20,6 +20,7 @@
 | [`rules/stack.md`](./rules/stack.md) | **ALWAYS ACTIVE** (this repo) | Always here. Next.js 16, next-intl en/pt parity, Apple motion, primitives, docs protocol. |
 | [`rules/design.md`](./rules/design.md) | TRIGGERED | UI/UX & frontend tasks. Hierarchy, 8-pt grid, typography, states, theming, glassmorphism, WCAG AA. |
 | [`rules/testing.md`](./rules/testing.md) | TRIGGERED | Logic, QA & refactoring tasks. AAA structure, coverage integrity, deterministic isolation. |
+| [`rules/git.md`](./rules/git.md) | TRIGGERED | Any task that commits, branches, or opens a PR. Commit format, no-AI-attribution, merge-commit policy, branch naming/lifecycle. |
 
 > **Note:** the Status column describes the **general project assistant** (whole-repo
 > context). A **specialized agent ignores these labels** and loads only the `rules:`
@@ -28,8 +29,9 @@
 ## How to load (default for whole-project context)
 
 If you are operating as the **general project assistant** (no specialized agent), load
-the four `ALWAYS ACTIVE` modules now — `core`, `architecture`, `security`, `stack` —
-and add `design` and/or `testing` the moment the task touches UI or tests.
+the four `ALWAYS ACTIVE` modules — `core`, `architecture`, `security`, `stack` — plus
+`git` (the general assistant commits routinely), and add `design`/`testing` the moment
+the task touches UI or tests.
 
 If you are operating as a **specialized agent**, load exactly the modules listed in your
 charter under [`.ai/agents/`](./agents/) — nothing more. See

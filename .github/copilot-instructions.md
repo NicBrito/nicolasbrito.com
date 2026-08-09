@@ -22,6 +22,8 @@ automatically by file path (see `.github/instructions/`), and specialist persona
   crypto, RBAC *(editing routes/middleware/inputs)*.
 * [`testing.md`](../.ai/rules/testing.md) — AAA, meaningful coverage, deterministic mocks
   *(editing tests)*.
+* [`git.md`](../.ai/rules/git.md) — commit format, attribution, merge policy, branches
+  *(when committing)*.
 
 ## Before re-deriving facts
 Read [`.ai/memory/shared/`](../.ai/memory/) (decisions, patterns, glossary). Don't re-scan

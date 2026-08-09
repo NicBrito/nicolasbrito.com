@@ -304,7 +304,8 @@ npm run test
 ```
 
 **Result:**
-- 60 tests passing (MorphingLabel 7 + Buttons 22 + ProjectCard 17 + **SocialLink 14**)
+- Suite breakdown: MorphingLabel 7 + Buttons 22 + ProjectCard 17 + **SocialLink 14** —
+  full suite green at HEAD (`npm test`)
 - Coverage: 100% of critical functionality
 
 ## 8. Design System Integration

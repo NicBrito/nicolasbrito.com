@@ -8,6 +8,8 @@ type MockNextImageProps = {
   alt: string;
   priority?: boolean;
   fill?: boolean;
+  onLoad?: () => void;
+  onError?: () => void;
 };
 
 type MockLinkProps = {
@@ -40,9 +42,16 @@ vi.mock("next-intl", () => ({
   },
 }));
 
+// Renders a real <img> (not a <span role="img">) because React only
+// attaches "load"/"error" as direct (non-delegated) DOM listeners for actual
+// resource-loading elements — a <span role="img"> never receives them, so
+// `fireEvent.load` / `fireEvent.error` below would silently no-op against
+// one. A real <img alt=...> still keeps the implicit ARIA role "img" and
+// accessible name the existing `getByRole("img", { name })` queries rely on.
 vi.mock("next/image", () => ({
-  default: ({ src, alt }: MockNextImageProps) => (
-    <span role="img" aria-label={alt} data-src={src} />
+  default: ({ src, alt, onLoad, onError }: MockNextImageProps) => (
+    // eslint-disable-next-line @next/next/no-img-element -- test-only mock; LCP/bandwidth rule doesn't apply here.
+    <img alt={alt} data-src={src} onLoad={onLoad} onError={onError} />
   ),
 }));
 
@@ -368,5 +377,116 @@ describe("ProjectCard", () => {
 
     // Assert
     expect(card).toHaveAttribute("data-motion-animate", "none");
+  });
+
+  // -------------------------------------------------------------------------
+  // Image status state machine — pins the `loading` -> `loaded` / `error`
+  // transitions and the resulting fallback visibility (NEW-8 audit target).
+  // The gradient-orb fallback layer is detected the same way the existing
+  // "RENDERS GRADIENT ORBS..." tests do: by querying for the caller-supplied
+  // `colors.from` class, since that class only exists in the fallback
+  // subtree's DOM.
+  // -------------------------------------------------------------------------
+
+  it("HIDES THE FALLBACK AND KEEPS THE IMAGE PRESENT AFTER THE IMAGE LOAD EVENT FIRES", () => {
+    // Arrange
+    const { container } = render(
+      <ProjectCard {...DEFAULT_PROPS} image="/test-image.jpg" />
+    );
+    const img = screen.getByRole("img", { name: "Test project image" });
+
+    // Act
+    fireEvent.load(img);
+
+    // Assert
+    expect(container.querySelector(".bg-blue-600")).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("img", { name: "Test project image" })
+    ).toBeInTheDocument();
+  });
+
+  it("RESTORES THE FALLBACK WHEN A LOADED IMAGE SUBSEQUENTLY FIRES AN ERROR EVENT", () => {
+    // Arrange — drive image status to "loaded" first (fallback confirmed
+    // hidden) so the assertions below isolate the effect of the error event
+    // that follows, rather than a fallback that was merely never dismissed.
+    const { container } = render(
+      <ProjectCard {...DEFAULT_PROPS} image="/test-image.jpg" />
+    );
+    const img = screen.getByRole("img", { name: "Test project image" });
+    fireEvent.load(img);
+    expect(container.querySelector(".bg-blue-600")).not.toBeInTheDocument();
+
+    // Act
+    fireEvent.error(img);
+
+    // Assert — the fallback branch reasserts itself; the image element
+    // stays mounted (hasImage is still true today), matching current
+    // behavior exactly.
+    expect(container.querySelector(".bg-blue-600")).toBeInTheDocument();
+    expect(
+      screen.getByRole("img", { name: "Test project image" })
+    ).toBeInTheDocument();
+  });
+
+  it("RENDERS ONLY THE FALLBACK PLACEHOLDER AND NO IMAGE ELEMENT WHEN NO IMAGE IS PROVIDED", () => {
+    // Arrange
+    // Act
+    const { container } = render(<ProjectCard {...DEFAULT_PROPS} />);
+
+    // Assert
+    expect(container.querySelector(".bg-blue-600")).toBeInTheDocument();
+    expect(screen.queryByRole("img")).not.toBeInTheDocument();
+  });
+
+  // -------------------------------------------------------------------------
+  // Interaction-state branches adjacent to the image state machine (also
+  // flagged uncovered by the NEW-8 audit): the reduced-motion-off side of
+  // the hover animate variant, and both sides of the onBlur focus-containment
+  // check. See RISKS in the handback for why these substitute for the
+  // nonexistent `showArrow` pin requested for this component.
+  // -------------------------------------------------------------------------
+
+  it("APPLIES THE HOVER ANIMATE VARIANT ON THE ACTIVE CARD WHEN REDUCED MOTION IS NOT PREFERRED", () => {
+    // Arrange
+    const { container } = render(<ProjectCard {...DEFAULT_PROPS} />);
+    const card = container.querySelector(".project-card") as HTMLElement;
+
+    // Act
+    fireEvent.focus(card);
+
+    // Assert
+    expect(card).toHaveAttribute("data-motion-animate", "hover");
+  });
+
+  it("CLEARS THE ACTIVE STATE WHEN BLUR MOVES FOCUS OUTSIDE THE CARD", () => {
+    // Arrange
+    const { container } = render(<ProjectCard {...DEFAULT_PROPS} />);
+    const card = container.querySelector(".project-card") as HTMLElement;
+    fireEvent.focus(card);
+    expect(card).toHaveAttribute("data-motion-animate", "hover");
+
+    // Act — relatedTarget is outside the card, so the containment check
+    // fails and the blur is honored.
+    fireEvent.blur(card, { relatedTarget: document.body });
+
+    // Assert
+    expect(card).toHaveAttribute("data-motion-animate", "none");
+  });
+
+  it("KEEPS THE ACTIVE STATE WHEN BLUR MOVES FOCUS TO ANOTHER ELEMENT INSIDE THE CARD", () => {
+    // Arrange
+    const { container } = render(<ProjectCard {...DEFAULT_PROPS} />);
+    const card = container.querySelector(".project-card") as HTMLElement;
+    const childLink = screen.getByText("View Case").closest("a") as HTMLElement;
+    fireEvent.focus(card);
+    expect(card).toHaveAttribute("data-motion-animate", "hover");
+
+    // Act — relatedTarget is a descendant of the card, so the containment
+    // check succeeds and the blur is ignored (no active-state flicker while
+    // focus moves between focusable children of the same card).
+    fireEvent.blur(card, { relatedTarget: childLink });
+
+    // Assert
+    expect(card).toHaveAttribute("data-motion-animate", "hover");
   });
 });

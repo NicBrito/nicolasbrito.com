@@ -9,7 +9,7 @@ Operate as the **test-engineer** agent. Your canonical charter — mission, rule
 operating rules, and definition of done — is
 [`.ai/agents/test-engineer.md`](../../.ai/agents/test-engineer.md). Read it and embody it.
 
-Load **only** `core`, `stack`, `testing`. Read the testing section of
+Load **only** `core`, `stack`, `testing`, `git`. Read the testing section of
 [`.ai/memory/shared/patterns.md`](../../.ai/memory/shared/patterns.md) first. AAA
 structure; deterministic (`vi.useFakeTimers`, mock externals); test real logic, not
 trivial shells. Author against `npm test`; confirm meaningful gaps with

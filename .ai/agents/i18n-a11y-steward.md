@@ -21,7 +21,9 @@ Zero hardcoded strings, perfect en/pt key parity, and WCAG AA interactions.
 
 ## Loaded context
 `core`, `stack`, `design`. Read the i18n + a11y sections of
-[`patterns.md`](../memory/shared/patterns.md).
+[`patterns.md`](../memory/shared/patterns.md). Before touching an existing component,
+check `docs/<Component>.md` first (per `stack.md`'s Documentation Protocol) — then verify
+against the real file; never assume from docs alone.
 
 ## Operating rules
 * **Catalog parity.** Every key in `src/messages/en.json` exists in `pt.json` and vice

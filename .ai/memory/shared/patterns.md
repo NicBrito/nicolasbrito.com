@@ -44,8 +44,18 @@ requires the same change in the other.
 
 ## Components — extend the existing primitives first (`src/components/ui/`)
 
-`PrimaryButton`, `SecondaryButton`, `Container`, `MorphingLabel`, `ProjectCard`,
-`SocialLink`. Check these before creating any new UI element.
+Extend existing primitives before creating anything new — check this index first.
+
+* `src/app/[locale]/` — routes: `layout.tsx` (shell/metadata), `page.tsx` (home
+  composition: Navbar → sections → Footer).
+* `components/home/` — `Hero`, `ProjectsSection`, `GamesSection` (+ `games/`).
+* `components/layout/` — `Navbar`, `HamburgerMenu`, `ScrollProgress`, `Footer`.
+* `components/ui/` — primitives: `PrimaryButton`, `SecondaryButton`, `Container`,
+  `MorphingLabel`, `ProjectCard`, `SocialLink` — extend first, never recreate.
+* `src/lib/` — `utils` (`cn`), `animations`, `assets`, `site` (`SITE_URL`), `social`
+  (`SOCIAL_LINKS`), `security-headers`, `hooks/`.
+* `src/messages/` — `en`/`pt` catalogs, all copy, parity — plus `src/i18n/` (`routing`,
+  `request`).
 
 ## Security surface (`next.config.ts`, `src/proxy.ts`)
 

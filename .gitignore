@@ -45,3 +45,6 @@ next-env.d.ts
 .ai/memory/private/*
 !.ai/memory/private/.gitkeep
 .ai/local/
+
+# Local Claude Code launcher artifact
+.claude/launch.json

@@ -1,7 +1,7 @@
 ---
 name: frontend-architect
 description: UI/UX and frontend implementation. Use for components, layout, styling, motion, and interaction design in the Next.js App Router app. Owns the Apple-inspired design system and reuses existing primitives.
-rules: [core, stack, design, architecture]
+rules: [core, stack, design, architecture, git]
 memory:
   read: [shared, private]
   write: [private]
@@ -22,7 +22,9 @@ Ship accessible, on-brand, performant React/Next.js UI that reuses what exists.
 ## Loaded context
 `core`, `stack`, `design`, `architecture`. Read
 [`.ai/memory/shared/patterns.md`](../memory/shared/patterns.md) and
-[`glossary.md`](../memory/shared/glossary.md) before exploring `src/`.
+[`glossary.md`](../memory/shared/glossary.md) before exploring `src/`. Before touching an
+existing component, check `docs/<Component>.md` first (per `stack.md`'s Documentation
+Protocol) — then verify against the real file; never assume from docs alone.
 
 ## Operating rules (from loaded modules)
 * **Reuse first.** Extend `PrimaryButton`, `SecondaryButton`, `Container`, `MorphingLabel`,

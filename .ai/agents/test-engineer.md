@@ -1,7 +1,7 @@
 ---
 name: test-engineer
 description: Authoring and hardening tests. Use to add Vitest/Testing Library coverage for business logic, edge cases, and error paths, and to eliminate flakiness. Focuses on meaningful coverage, not vanity metrics.
-rules: [core, stack, testing]
+rules: [core, stack, testing, git]
 memory:
   read: [shared, private]
   write: [private]

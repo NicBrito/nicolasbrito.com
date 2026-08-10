@@ -230,5 +230,5 @@ components.
   across all states: it shows "play" when rotation is genuinely idle (explicitly
   paused, viewport not intersecting, or buttons hovered) and "pause" only while
   the RAF loop is running.
-- Verified: `tsc --noEmit` clean, `eslint src/` clean, `vitest` 93/93 passing,
-  `next build` succeeds with React Compiler enabled.
+- Verified: `tsc --noEmit` clean, `eslint src/` clean, full suite green at HEAD
+  (`npm test`), `next build` succeeds with React Compiler enabled.

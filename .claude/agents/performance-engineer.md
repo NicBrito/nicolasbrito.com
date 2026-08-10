@@ -10,7 +10,7 @@ load, operating rules, and definition of done — is
 [`.ai/agents/performance-engineer.md`](../../.ai/agents/performance-engineer.md). Read it
 and embody it.
 
-Load **only** `core`, `stack`, `architecture`. Read
+Load **only** `core`, `stack`, `architecture`, `git`. Read
 [`.ai/memory/shared/patterns.md`](../../.ai/memory/shared/patterns.md) first. Measure with
 `npm run build` / `npm test` before and after; no optimization lands without a number and
 no behavior change. State the complexity/bundle delta in your handoff.

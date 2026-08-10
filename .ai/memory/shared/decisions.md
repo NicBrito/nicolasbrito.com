@@ -13,9 +13,7 @@ per the protocol in [`../README.md`](../README.md).
   + concise bullet body; **no AI attribution ever**; MERGE COMMITS only (never
   squash/rebase); branches `<type>/kebab-scope`; temporary branch deleted on merge.
 * **Repo audit #2**: Wave 1 done 2026-08-07 (HIG hamburger hit areas, motion gates complete, docs drift cleared; NEW-13 pre-closed by PR #3; DP-13 closed (footer, 2026-08-08)); Waves 2 regression-net / 3 perf / 4 motion-internals pending (`docs/audit-2026-07-06.md`).
-* **Open optimization — token audit** (`docs/token-efficiency-audit-2026-07-06.md`):
-  Wave 1 done (this log); Wave 2 = `rules/git.md` extraction + docs pointers + src
-  index; Wave 3 owner-gated.
+* **Token audit**: Waves 1–2 done (`git.md` extracted, first-read pointers, `src/` index — 2026-08-08); Wave 3 = TOK-2 appendix split (stack-scope ADR unlocks) + TOK-3 relocation (verify harness first) — own front (`docs/token-efficiency-audit-2026-07-06.md`).
 * **DESIGN-1 CLOSED** (2026-08-07): tuned springs ratified for gesture/physics-driven interactions; constant-duration beziers remain the entry/transition rule.
 * **Hit-area policy** (2026-08-07): interactive == visual bounds for pointer controls, floor 24×24 px (WCAG 2.5.8); hamburger touch controls ≥44×44 px (Apple HIG) via invisible extensions.
 * **Stack & hosting** (2026-08-07): Next.js-only single stack (unlocks TOK-2); Vercel stays, Cloudflare parked (re-trigger: backend services or outgrows static hosting).
@@ -36,6 +34,23 @@ per the protocol in [`../README.md`](../README.md).
   (never hardcode); pre-commit `npm test` + commitlint; dev serves HTTPS.
 
 ---
+
+## 2026-08-08 — Token-efficiency Wave 2: git.md extraction + read-targeting (TOK-1/12/13)
+
+**Decision:** Wave 2 executed: the 5-part Git governance block moved verbatim from
+`core.md` into the new triggered `rules/git.md`, loaded via the `rules:` manifests by the
+four Bash-equipped charters (frontend-architect, performance-engineer, security-analyst,
+test-engineer) and the general assistant; core keeps the language clause plus a one-line
+pointer. First-read pointers to `docs/<Component>.md` added to the two implementer
+charters (TOK-12); `patterns.md` "Components" extended into a `src/` path→purpose index
+(TOK-13). Riders: `.claude/launch.json` gitignored; component docs no longer carry
+absolute suite totals (rule codified in `stack.md`'s Documentation Protocol; Games.md and
+SocialLink.md reworded).
+
+**Why:** ~286t shed per dispatch for the four no-shell charters that structurally cannot
+act on git rules; zero information loss — every agent that can commit still loads the
+module. Suite totals in docs drifted on every unrelated PR (three fixes in two days);
+deferring to `npm test` ends the class.
 
 ## 2026-08-08 — Footer landmark shipped (closes DP-13)
 

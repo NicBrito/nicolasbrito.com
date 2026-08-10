@@ -22,3 +22,4 @@ summary: nicolasbrito.com specifics — Next.js 16 App Router, next-intl en/pt p
   * Before generating new UI elements, verify if these primitives can be extended or utilized.
 * **Documentation Protocol:**
   * System architecture and component details are maintained in English within the `docs/` directory (e.g., `docs/Foundation.md`, `docs/Navbar.md`). You MUST review these files before refactoring corresponding components.
+  * Component docs MUST NOT state absolute suite totals (e.g. "93/93 passing") — totals drift with every unrelated suite change; defer to `npm test` at HEAD. Per-component behavior/test lists remain fine.

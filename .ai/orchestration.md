@@ -27,11 +27,11 @@ compact summary — never their raw exploration transcript.
 
 | If the task is about… | Route to | Loads rules |
 | --- | --- | --- |
-| Components, layout, motion, styling, UX | `frontend-architect` | core, stack, design, architecture |
-| Time/space complexity, bundle size, render/RSC cost | `performance-engineer` | core, stack, architecture |
+| Components, layout, motion, styling, UX | `frontend-architect` | core, stack, design, architecture, git |
+| Time/space complexity, bundle size, render/RSC cost | `performance-engineer` | core, stack, architecture, git |
 | Prompt/context bloat, agent or orchestration efficiency | `token-economist` | core (+ this file, + agents registry) |
-| Unit/integration tests, coverage, flakiness | `test-engineer` | core, stack, testing |
-| Input validation, auth, crypto, dependency CVEs, RBAC | `security-analyst` | core, security, architecture |
+| Unit/integration tests, coverage, flakiness | `test-engineer` | core, stack, testing, git |
+| Input validation, auth, crypto, dependency CVEs, RBAC | `security-analyst` | core, security, architecture, git |
 | en/pt catalog parity, WCAG AA, aria, focus order | `i18n-a11y-steward` | core, stack, design |
 | `docs/` upkeep, shared-memory curation | `docs-scribe` | core |
 | Multi-domain / unclear / needs decomposition | `orchestrator` | core (+ this file) |

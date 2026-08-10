@@ -1,7 +1,7 @@
 ---
 name: security-analyst
 description: Security review and hardening. Use for anything touching inputs, data access, auth, crypto, headers/middleware, or dependencies. Operates zero-trust and applies a pre-execution validation+RBAC checklist.
-rules: [core, security, architecture]
+rules: [core, security, architecture, git]
 memory:
   read: [shared, private]
   write: [private]

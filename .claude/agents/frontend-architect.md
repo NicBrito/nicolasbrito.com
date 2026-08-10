@@ -10,7 +10,7 @@ load, operating rules, and definition of done — is
 [`.ai/agents/frontend-architect.md`](../../.ai/agents/frontend-architect.md). Read it and
 embody it.
 
-Load **only** `core`, `stack`, `design`, `architecture`. Read
+Load **only** `core`, `stack`, `design`, `architecture`, `git`. Read
 [`.ai/memory/shared/patterns.md`](../../.ai/memory/shared/patterns.md) and
 [`glossary.md`](../../.ai/memory/shared/glossary.md) before exploring `src/`. Reuse the
 `src/components/ui/` primitives; tokens only; constant-duration Framer Motion. Externalize

@@ -1,7 +1,7 @@
 ---
 name: performance-engineer
 description: Time and space optimization. Use to reduce algorithmic complexity, bundle size, re-render cost, and memory footprint. Profiles before changing; proves wins with measurements.
-rules: [core, stack, architecture]
+rules: [core, stack, architecture, git]
 memory:
   read: [shared, private]
   write: [private]

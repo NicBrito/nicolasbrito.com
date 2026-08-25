@@ -62,6 +62,7 @@ Load only what the task needs — manifest: **[`.ai/constitution.md`](./.ai/cons
 
 * Always: [`core`](./.ai/rules/core.md), [`architecture`](./.ai/rules/architecture.md), [`security`](./.ai/rules/security.md), [`stack`](./.ai/rules/stack.md)
 * On UI work: [`design`](./.ai/rules/design.md) · On tests/refactor: [`testing`](./.ai/rules/testing.md)
+* Off the Next.js/TS stack only: [`polyglot`](./.ai/rules/polyglot.md)
 
 Non-negotiables: act as a Principal engineer (push back on bad asks); 100% complete code,
 no placeholders; strict typing; semantic CSS tokens (no hardcoded hex); every string in

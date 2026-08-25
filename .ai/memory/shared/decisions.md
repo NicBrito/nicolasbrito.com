@@ -11,7 +11,7 @@ per the protocol in [`../README.md`](../README.md).
 
 * **Git governance** (2026-07-06, `rules/git.md`): `type(scope): subject` + concise bullet; **no AI attribution**; MERGE COMMITS only; branches `<type>/kebab`; temp branches deleted on merge.
 * **Repo audit #2**: Wave 1 done 2026-08-07 (HIG, motion gates, docs cleared; DP-13 closed); Wave 2 done 2026-08-09 (165 tests); Waves 3/4 pending (`docs/audit-2026-07-06.md`).
-* **Token audit**: Waves 1–2 done 2026-08-08 (`git.md`, first-read pointers, `src/` index); Wave 3 = TOK-2 appendix split + TOK-3 relocation (gated: verify agentic harnesses never fire it) (`docs/token-efficiency-audit-2026-07-06.md`).
+* **Token audit CLOSED** (2026-08-09): Waves 1–3 done — bounded digest, `git.md` split, first-read pointers, `src/` index, `polyglot.md` split, Continuation Protocol → Copilot adapter only (`GEMINI.md` excluded: Antigravity reads it agentically). Re-triggers: `polyglot.md` frontmatter + adapter note (`docs/token-efficiency-audit-2026-07-06.md`).
 * **DESIGN-1 CLOSED** (2026-08-07): tuned springs ratified; constant-duration beziers rule entry/transition.
 * **Hit-area policy** (2026-08-07): interactive == visual (24×24 px WCAG 2.5.8 floor); hamburger ≥44×44 px (Apple HIG) via invisible extensions.
 * **Stack & hosting** (2026-08-07): Next.js-only (unlocks TOK-2); Vercel stays, Cloudflare parked (re-trigger: backend/outgrow static).
@@ -23,6 +23,24 @@ per the protocol in [`../README.md`](../README.md).
 * **Visual/i18n/gates**: dark-mode-first tokens; en/pt catalogs (no hardcode); pre-commit `npm test` + commitlint; HTTPS dev.
 
 ---
+
+## 2026-08-09 — Token-efficiency Wave 3: polyglot split + Continuation relocation (closes the audit)
+
+**Decision:** TOK-2: the polyglot routing block (Mobile/Swift, Go-vs-NestJS, C/C99/C++)
+moved verbatim from `architecture.md` (350 → 276 words) into the new TRIGGERED
+`rules/polyglot.md` (181 words) — no charter loads it; re-trigger in its frontmatter
+(mobile app, non-TS backend service, or systems component). TOK-3: verification first —
+the git pickaxe finds the pause string only in the two commits that authored the rule;
+a tree-wide grep finds only the definition site; agentic runners emit files via tool
+calls and cannot fire a chat-stream pause. Premise held, with one correction: `GEMINI.md`
+sits in Antigravity's agentic read set (per `AGENTS.md`), so the clause relocated to
+`.github/copilot-instructions.md` ONLY, not to `GEMINI.md` as the audit sketched.
+`core.md` 344 → 295 words.
+
+**Why:** Always-unreachable text taxed every dispatch. Realized steady-state: the
+core-only charters' rules load fell 508 → 295 words (−42%, matching the audit's
+estimate); architecture loaders shed another 74 words; nothing was deleted — both moves
+are reversible pointer swaps with explicit re-triggers. The token audit is CLOSED.
 
 ## 2026-08-09 — Audit #2 Wave 2: regression net over the behavioral surface (NEW-7/NEW-8)
 

@@ -12,6 +12,13 @@ automatically by file path (see `.github/instructions/`), and specialist persona
   `strict`, Tailwind v4. Reuse `src/components/ui/` primitives. Semantic CSS tokens only (no
   hardcoded hex). Every string in **both** `src/messages/en.json` and `pt.json` via
   `useTranslations`. Constant-duration Framer Motion; animate `transform`, not layout.
+* **Continuation Protocol (raw-chat safeguard — Copilot Chat only):** If you calculate
+  that your generated output will approach or exceed your maximum token limits, you MUST
+  halt generation at a safe, syntactically logical breakpoint. You MUST output exactly
+  this string: "Token limit approaching. Pausing generation of [Filename]. Type '.' to
+  continue exactly from this line." *(Relocated from `.ai/rules/core.md` — token audit
+  TOK-3: agentic runners emit files via tool calls and cannot hit a single-response
+  limit; this protects only chat surfaces that stream whole files inline.)*
 
 ## Load on demand (auto-attached by path, or load when relevant)
 * [`architecture.md`](../.ai/rules/architecture.md) — strict typing, Big-O, dependency
@@ -24,6 +31,8 @@ automatically by file path (see `.github/instructions/`), and specialist persona
   *(editing tests)*.
 * [`git.md`](../.ai/rules/git.md) — commit format, attribution, merge policy, branches
   *(when committing)*.
+* [`polyglot.md`](../.ai/rules/polyglot.md) — Swift/Go/C stack routing *(only off the
+  Next.js/TS stack)*.
 
 ## Before re-deriving facts
 Read [`.ai/memory/shared/`](../.ai/memory/) (decisions, patterns, glossary). Don't re-scan

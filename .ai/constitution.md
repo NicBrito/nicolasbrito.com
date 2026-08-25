@@ -21,6 +21,7 @@
 | [`rules/design.md`](./rules/design.md) | TRIGGERED | UI/UX & frontend tasks. Hierarchy, 8-pt grid, typography, states, theming, glassmorphism, WCAG AA. |
 | [`rules/testing.md`](./rules/testing.md) | TRIGGERED | Logic, QA & refactoring tasks. AAA structure, coverage integrity, deterministic isolation. |
 | [`rules/git.md`](./rules/git.md) | TRIGGERED | Any task that commits, branches, or opens a PR. Commit format, no-AI-attribution, merge-commit policy, branch naming/lifecycle. |
+| [`rules/polyglot.md`](./rules/polyglot.md) | TRIGGERED | Only if a task leaves the Next.js/TS stack (mobile, non-TS backend, systems). Swift/Go/C routing. No charter loads it today. |
 
 > **Note:** the Status column describes the **general project assistant** (whole-repo
 > context). A **specialized agent ignores these labels** and loads only the `rules:`

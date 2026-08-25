@@ -9,31 +9,38 @@ per the protocol in [`../README.md`](../README.md).
 
 ## Active Decisions (digest — every in-force decision, one line each)
 
-* **Git governance** (2026-07-06, `core.md` VCS Protocol): commits `type(scope): subject`
-  + concise bullet body; **no AI attribution ever**; MERGE COMMITS only (never
-  squash/rebase); branches `<type>/kebab-scope`; temporary branch deleted on merge.
-* **Repo audit #2**: Wave 1 done 2026-08-07 (HIG hamburger hit areas, motion gates complete, docs drift cleared; NEW-13 pre-closed by PR #3; DP-13 closed (footer, 2026-08-08)); Waves 2 regression-net / 3 perf / 4 motion-internals pending (`docs/audit-2026-07-06.md`).
-* **Token audit**: Waves 1–2 done (`git.md` extracted, first-read pointers, `src/` index — 2026-08-08); Wave 3 = TOK-2 appendix split (stack-scope ADR unlocks) + TOK-3 relocation (verify harness first) — own front (`docs/token-efficiency-audit-2026-07-06.md`).
-* **DESIGN-1 CLOSED** (2026-08-07): tuned springs ratified for gesture/physics-driven interactions; constant-duration beziers remain the entry/transition rule.
-* **Hit-area policy** (2026-08-07): interactive == visual bounds for pointer controls, floor 24×24 px (WCAG 2.5.8); hamburger touch controls ≥44×44 px (Apple HIG) via invisible extensions.
-* **Stack & hosting** (2026-08-07): Next.js-only single stack (unlocks TOK-2); Vercel stays, Cloudflare parked (re-trigger: backend services or outgrows static hosting).
-* **SEC-3 accepted:** 2 moderate postcss-in-next advisories (build-time only; clears
-  when Next re-pins). **SEC-5:** preload submitted 2026-08-07, pending inclusion — HSTS directives must never be weakened (single-sourced in `src/lib/security-headers.ts`).
-  **META-5 won't-fix:** adapters keep short inline summaries.
-* **Contrast tokens:** `--accent-strong` #0071e3 for white-on-fill; `--accent` #2997ff
-  reserved for text-on-dark (6.96:1).
-* **Motion:** `useReducedMotion` gates entry/transition motion app-wide; gates must be
-  purely additive. **Standing lesson:** behavior-changing UI edits must be
-  browser-tested and must never remove an existing affordance — when unsure, leave
-  working UI alone.
-* **Architecture:** five-layer `.ai/` system; adapters point, never copy; each charter
-  loads a minimal rule subset.
-* **Memory:** `shared/` committed, `private/` gitignored; this log stays bounded via
-  digest + archive.
-* **Visual/i18n/gates:** dark-mode-first single token set; all copy via en/pt catalogs
-  (never hardcode); pre-commit `npm test` + commitlint; dev serves HTTPS.
+* **Git governance** (2026-07-06, `rules/git.md`): `type(scope): subject` + concise bullet; **no AI attribution**; MERGE COMMITS only; branches `<type>/kebab`; temp branches deleted on merge.
+* **Repo audit #2**: Wave 1 done 2026-08-07 (HIG, motion gates, docs cleared; DP-13 closed); Wave 2 done 2026-08-09 (165 tests); Waves 3/4 pending (`docs/audit-2026-07-06.md`).
+* **Token audit**: Waves 1–2 done 2026-08-08 (`git.md`, first-read pointers, `src/` index); Wave 3 = TOK-2 appendix split + TOK-3 relocation (gated: verify agentic harnesses never fire it) (`docs/token-efficiency-audit-2026-07-06.md`).
+* **DESIGN-1 CLOSED** (2026-08-07): tuned springs ratified; constant-duration beziers rule entry/transition.
+* **Hit-area policy** (2026-08-07): interactive == visual (24×24 px WCAG 2.5.8 floor); hamburger ≥44×44 px (Apple HIG) via invisible extensions.
+* **Stack & hosting** (2026-08-07): Next.js-only (unlocks TOK-2); Vercel stays, Cloudflare parked (re-trigger: backend/outgrow static).
+* **Security**: SEC-3 = 2 moderate postcss-in-next advisories (build-time, clears on Next re-pin). SEC-5 = preload submitted 2026-08-07, pending inclusion — HSTS directives must never be weakened (single-sourced `src/lib/security-headers.ts`). META-5 won't-fix (inline summaries).
+* **Contrast tokens**: `--accent-strong` #0071e3; `--accent` #2997ff (6.96:1 text-on-dark).
+* **Motion**: `useReducedMotion` gates entry/transition (additive only). **Standing lesson**: behavior-changing UI edits are browser-tested; never remove an affordance.
+* **Architecture**: five-layer `.ai/`; adapters point (never copy); minimal rules per charter.
+* **Memory**: `shared/` committed, `private/` gitignored; log bounded via digest + archive.
+* **Visual/i18n/gates**: dark-mode-first tokens; en/pt catalogs (no hardcode); pre-commit `npm test` + commitlint; HTTPS dev.
 
 ---
+
+## 2026-08-09 — Audit #2 Wave 2: regression net over the behavioral surface (NEW-7/NEW-8)
+
+**Decision:** The layout/home behavioral surface is pinned: new suites for Navbar (40
+tests — hit-area ADR split, dropdown semantics, keyboard paths), ScrollProgress (5 —
+progress/visibility semantics, DP-8/DP-12 cleanup pairs pinned as-is), GamesSection
+shell (5 — aria-live status, play/pause, focus; gesture physics stays browser-tested),
+plus extended HamburgerMenu (10) and ProjectCard (23 — image state machine, NEW-8).
+Suite 104 → 165; statements 30.68% → 78.01% overall (coverage reported, not targeted,
+per testing.md). Zero source changes — the net pins today's decided behavior ahead of
+Waves 3/4.
+
+**Why:** NEW-7 was the audit's only S1: the `b92ad03` class of undocumented behavioral
+change had no net under it. Findings surfaced while pinning are parked for their own
+fronts: Navbar dropdown APG keyboard semantics; MorphingLabel's ungated per-character
+transition; GamesSection double-landmark and play/pause `aria-pressed`; DP-14 sharpened
+(a cached broken image sticks in `loading` forever); `docs/Foundation.md` §4 still
+describes ScrollProgress's old left-side thread design.
 
 ## 2026-08-08 — Token-efficiency Wave 2: git.md extraction + read-targeting (TOK-1/12/13)
 

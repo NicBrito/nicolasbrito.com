@@ -10,7 +10,8 @@ per the protocol in [`../README.md`](../README.md).
 ## Active Decisions (digest — every in-force decision, one line each)
 
 * **Git governance** (2026-07-06, `rules/git.md`): `type(scope): subject` + concise bullet; **no AI attribution**; MERGE COMMITS only; branches `<type>/kebab`; temp branches deleted on merge.
-* **Repo audit #2**: Wave 1 done 2026-08-07 (HIG, motion gates, docs cleared; DP-13 closed); Wave 2 done 2026-08-09 (165 tests); Waves 3/4 pending (`docs/audit-2026-07-06.md`).
+* **Repo audit #2**: Wave 1 done 2026-08-07 (HIG, motion gates, docs cleared; DP-13 closed); Wave 2 done 2026-08-09 (165 tests); Wave 3 done 2026-09-05 (measured perf pass); Wave 4 pending (`docs/audit-2026-07-06.md`).
+* **Perf posture (Wave 3, 2026-09-05)**: NEW-5 closed — Hero LCP entry now paints at rest (observed LCP 1141→38ms). NEW-6 (dynamic `GamesSection`) and PERF-2 (LazyMotion) measured/parked — re-trigger: pair with PERF-1's still-open RSC split, or first-load JS becomes the binding score constraint.
 * **Token audit CLOSED** (2026-08-09): Waves 1–3 done — bounded digest, `git.md` split, first-read pointers, `src/` index, `polyglot.md` split, Continuation Protocol → Copilot adapter only (`GEMINI.md` excluded: Antigravity reads it agentically). Re-triggers: `polyglot.md` frontmatter + adapter note (`docs/token-efficiency-audit-2026-07-06.md`).
 * **DESIGN-1 CLOSED** (2026-08-07): tuned springs ratified; constant-duration beziers rule entry/transition.
 * **Hit-area policy** (2026-08-07): interactive == visual (24×24 px WCAG 2.5.8 floor); hamburger ≥44×44 px (Apple HIG) via invisible extensions.
@@ -23,6 +24,34 @@ per the protocol in [`../README.md`](../README.md).
 * **Visual/i18n/gates**: dark-mode-first tokens; en/pt catalogs (no hardcode); pre-commit `npm test` + commitlint; HTTPS dev.
 
 ---
+
+## 2026-09-05 — Audit #2 Wave 3: measured performance pass (NEW-5 closed; NEW-6 & PERF-2 parked)
+
+**Decision:** NEW-5 is CLOSED: `Hero.tsx`'s title block (`<h1>` name + role `<span>`) moved off
+the shared staged entry onto a dedicated `titleVariants` — `y: 12 → 0` only, over a constant
+0.8 s `[0.16, 1, 0.3, 1]`, declaring neither `opacity` nor `filter` — so the page's LCP element
+paints opaque and unblurred in the first frame. Measured (identical build/serve protocol,
+median of 3 Lighthouse runs): observed LCP 1141 ms → 38 ms, now equal to observed FCP (gap
+1092 ms → 0); Lighthouse's simulated headline 3009 ms → 2713 ms. NEW-6 (`next/dynamic`
+deferral of `GamesSection`, `ssr: true` + reserved placeholder) was implemented, measured, and
+PARKED, not shipped — `page.tsx` is unchanged: first-load JS regressed 266.8 → 273.7 KB gz
+(+6.9 KB, 10 → 12 files). PERF-2 (LazyMotion `m.*` migration) verdict: NOT justified now,
+decision only, no code written. DP-14 and UX-2 remain parked, untouched by this front.
+
+**Why:** The Lighthouse headline moved far less than the observed trace (−296 ms vs. −1103 ms)
+because in this build **simulated LCP == simulated TTI**: under lantern throttling, LCP is
+bounded by downloading and hydrating the whole ~267 KB gz first load — PERF-1's *other* half
+(Hero is still a client component, no RSC offload), which stays OPEN. NEW-6 failed
+structurally, not in principle: Turbopack did split a 6.8 KB gz carousel chunk, but Next
+hoisted it straight back into the shared client-component chunk list (same manifest entry as
+Navbar/Hero/ScrollProgress/ProjectsSection), so it never left the first load — and
+framer-motion can't leave regardless, since 14 modules import it (Hero, Navbar, ScrollProgress,
+ProjectCard included). PERF-2 is deferred, not rejected: the bottleneck isn't Framer's parse
+cost (TBT is already 8 ms, and simulated LCP == simulated TTI points at the download+hydration
+chain instead), and the carousel's drag/pan forces `domMax` — the largest feature bundle — so
+the realistic cut is a minority of the 69.7 KB gz chunk; cost stays L across all 14 motion modules.
+Re-trigger: bundle PERF-2 with PERF-1's RSC split (same hydration chain), or once first-load JS
+becomes the binding constraint on the score.
 
 ## 2026-08-09 — Token-efficiency Wave 3: polyglot split + Continuation relocation (closes the audit)
 

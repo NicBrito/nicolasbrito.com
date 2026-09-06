@@ -144,13 +144,16 @@ describe("useCarouselAutoplay", () => {
   });
 
   // -------------------------------------------------------------------------
-  // Branch 2 — early-complete guard: progressRef already at 1 (remainingMs ≤ 0)
+  // Branch 2 — early-complete guard: progressRef already at 1 (remainingMs ≤ 0).
+  // The completion is deferred by one RAF so onComplete's state cascade never
+  // runs inline in the effect body, and the deferred frame is cancellable.
   // -------------------------------------------------------------------------
-  it("calls onComplete synchronously and skips RAF when progress is already complete", () => {
+  it("defers onComplete to a RAF frame, cancels it on disable, and re-arms it, when progress is already complete", () => {
     // Arrange — progress already at 1.0 means remainingMs === 0
-    const { onComplete } = setup({
+    const durations = [3000, 3000, 3000];
+    const { rerender, currentIndexRef, progressRef, fillRef, onComplete } = setup({
       enabled: true,
-      durations: [3000, 3000, 3000],
+      durations,
       currentIndex: 0,
       progressStart: 1,
     });
@@ -160,12 +163,49 @@ describe("useCarouselAutoplay", () => {
       FrameRequestCallback
     >;
 
-    // Act — effect ran synchronously during renderHook; no extra trigger needed.
+    // Assert — the effect scheduled a frame instead of completing inline
+    expect(pending.size).toBe(1);
+    expect(onComplete).not.toHaveBeenCalled();
 
-    // Assert — no RAF was queued, completion fired immediately, wraps to index 1
+    // Act — disable autoplay before that frame runs, then drain (timestamp is
+    // irrelevant here: the deferred callback ignores it).
+    rerender({
+      enabled: false,
+      durations,
+      currentIndex: 0,
+      currentIndexRef,
+      progressRef,
+      fillRef,
+      onComplete,
+    });
+    drainRAF(0);
+
+    // Assert — teardown cancelled the deferred completion
     expect(pending.size).toBe(0);
+    expect(onComplete).not.toHaveBeenCalled();
+
+    // Act — re-enable: progress is still 1, so the deferral arms again
+    rerender({
+      enabled: true,
+      durations,
+      currentIndex: 0,
+      currentIndexRef,
+      progressRef,
+      fillRef,
+      onComplete,
+    });
+
+    // Assert — a fresh frame is pending, still nothing fired inline
+    expect(pending.size).toBe(1);
+    expect(onComplete).not.toHaveBeenCalled();
+
+    // Act — let that frame run
+    drainRAF(0);
+
+    // Assert — completion fired once on the frame, wraps to index 1, loop stopped
     expect(onComplete).toHaveBeenCalledTimes(1);
     expect(onComplete).toHaveBeenCalledWith(1);
+    expect(pending.size).toBe(0);
   });
 
   // -------------------------------------------------------------------------

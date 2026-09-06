@@ -63,6 +63,12 @@ export function ScrollProgress() {
   const bounceTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isScrollingRef = useRef(false);
   const isBouncingRef = useRef(false);
+  // Live layout measurements for the scroll handler. Reading the state values
+  // there would compute `maxScroll` from whatever was committed last, so a
+  // scroll event landing between a resize and its commit would use pre-resize
+  // dimensions. These are written at measurement time instead.
+  const contentHeightRef = useRef(0);
+  const windowHeightRef = useRef(0);
   const reduced = useReducedMotion();
   const { scrollY } = useScroll();
   const hasPointerDevice = useMediaQuery(POINTER_MEDIA_QUERY);
@@ -113,6 +119,9 @@ export function ScrollProgress() {
       const nextContentHeight = document.documentElement.scrollHeight;
       const nextWindowHeight = window.innerHeight;
 
+      contentHeightRef.current = nextContentHeight;
+      windowHeightRef.current = nextWindowHeight;
+
       setContentHeight((previous) => (previous === nextContentHeight ? previous : nextContentHeight));
       setWindowHeight((previous) => (previous === nextWindowHeight ? previous : nextWindowHeight));
     };
@@ -150,7 +159,7 @@ export function ScrollProgress() {
     const previous = scrollY.getPrevious();
     const prevY = previous ?? latest;
     
-    const maxScroll = contentHeight - windowHeight;
+    const maxScroll = contentHeightRef.current - windowHeightRef.current;
     
     const isAtTop = latest <= SCROLL_EDGE_THRESHOLD_PX;
     const wasAtTop = prevY <= SCROLL_EDGE_THRESHOLD_PX;

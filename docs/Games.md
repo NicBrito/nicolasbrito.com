@@ -77,6 +77,11 @@ with no freeze. `doAdvance` also stops autoplay synchronously (so a queued RAF
 tick can't double-fire), resolves direction from `pendingIndexRef`, and clears the
 previous staged timers, so input is never lost or queued.
 
+**Direction resolution — staged-wrap exception:** autoplay's 5→1 wrap is the only case where
+a forward-to-backward slide change *should* occur. A manual dot-click from 5→1 is a genuine
+backward jump (the user dragged backward) and slides backward per intent. Autoplay wraps are
+keyed on `staged`, not indices, so `isAutoplayWrap = staged && previousIndex === GAMES.length - 1 && nextIndex === 0`.
+
 Why split on trigger and not on hover/settle state: the staged choreography only
 *reads* as elegant when its phases have room to breathe (autoplay's multi-second
 cadence). Forcing it onto a manual move — where the user expects an instant

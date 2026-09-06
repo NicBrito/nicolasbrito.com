@@ -28,6 +28,7 @@ do not concatenate class strings by hand.
   `morphingLabelSpeed = { default: { animate: 0.2, exit: 0.15 }, fast: { ... } } as const`.
 * Custom `cubic-bezier` easing (e.g. `[0.2, 0, 0.2, 1]`). Animate `transform` (GPU), never
   layout properties. Wrap exit/enter in `<AnimatePresence mode="popLayout">`.
+* **Ref mirroring lesson (Wave 4, 2026-09-06):** before mirroring reactive state into a ref for an insertion-effect subscriber (like framer's `useMotionValueEvent`), check the subscriber's effect phase. `useLiveRef` writes in a passive effect, which runs strictly *after* commit — too late for an insertion-effect consumer whose callback is already subscribed with stale deps. Write to the ref at measurement time instead (synchronously or in `useLayoutEffect`). This matters for `ScrollProgress.tsx`, `GamesSection.tsx`, and `useCarouselAutoplay.ts`.
 
 ## Testing — deterministic Vitest (`src/**/*.{test,spec}.{ts,tsx}`)
 
@@ -66,10 +67,7 @@ and there are no route handlers or `use server` actions. **CSP now present** in 
 `<script>` tags; SSG mints no per-request nonce) — a bare `script-src 'self'` blocks hydration and
 renders the page all-black. Dev additionally needs `'unsafe-eval'` + `connect-src ws: wss:` for
 Turbopack HMR; prod adds `upgrade-insecure-requests`. `style-src 'unsafe-inline'` is for Framer
-inline styles. **Always render-test a CSP in a browser, not just curl the header.** **Residual:** one moderate postcss advisory bundled inside
-`node_modules/next` (range ≤16.3.0-canary.5) — accepted as build-time CSS tool, not runtime XSS
-vector; clears when Next re-pins to stable. Re-audit the moment a route handler, form, or
-network call is introduced.
+inline styles. **Always render-test a CSP in a browser, not just curl the header.** **Residual:** SEC-3 escalated 2026-09-06 — `npm audit` reports 9 vulns (1 moderate, 8 high) in `next@16.2.9` and dependencies. Postcss (range ≤8.5.22) and sharp remain build-time only, unreachable: empty `images.remotePatterns`/`domains` blocks all remote URLs. Re-audit the moment a route handler, form, or server action lands.
 
 ## Contrast caveat (`--accent` #2997ff, `--accent-strong` #0071e3)
 

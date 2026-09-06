@@ -256,7 +256,13 @@ export function GamesSection() {
 
     setButtonsHovered(false);
     setImmediateExit(!staged);
-    setDirection(nextIndex > pendingIndexRef.current ? 1 : -1);
+    // `staged` is the discriminator, not the indices: autoplay is the only
+    // caller that wraps last → first, and its wrap still travels forward. Every
+    // manual path is bounded and never wraps, so a manual last → first (dot
+    // click) is a genuine backward jump and must keep sliding backward.
+    const previousIndex  = pendingIndexRef.current;
+    const isAutoplayWrap = staged && previousIndex === GAMES.length - 1 && nextIndex === 0;
+    setDirection(isAutoplayWrap || nextIndex > previousIndex ? 1 : -1);
     pendingIndexRef.current = nextIndex;
     progressRef.current = 0;
     setIsHoverLocked(true);

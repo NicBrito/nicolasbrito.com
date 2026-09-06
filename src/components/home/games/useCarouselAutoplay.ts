@@ -69,12 +69,19 @@ export function useCarouselAutoplay({
       onCompleteRef.current((currentIndexRef.current + 1) % len);
     };
 
-    if (remainingMs <= 0) {
-      complete();
-      return;
-    }
-
     activeRef.current = true;
+
+    // Progress was already full when this run armed (autoplay re-enabled right
+    // on the boundary). Defer the completion by one frame instead of running
+    // `onComplete`'s state cascade synchronously inside the effect body: that
+    // keeps the swap off the render-critical path, and parking the handle in
+    // `rafRef` lets `stop` cancel it on unmount or disable.
+    if (remainingMs <= 0) {
+      rafRef.current = requestAnimationFrame(() => {
+        if (activeRef.current) complete();
+      });
+      return stop;
+    }
 
     const tick = (now: number) => {
       if (!activeRef.current) return;

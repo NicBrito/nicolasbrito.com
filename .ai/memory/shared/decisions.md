@@ -10,13 +10,13 @@ per the protocol in [`../README.md`](../README.md).
 ## Active Decisions (digest — every in-force decision, one line each)
 
 * **Git governance** (2026-07-06, `rules/git.md`): `type(scope): subject` + concise bullet; **no AI attribution**; MERGE COMMITS only; branches `<type>/kebab`; temp branches deleted on merge.
-* **Repo audit #2**: Wave 1 done 2026-08-07 (HIG, motion gates, docs cleared; DP-13 closed); Wave 2 done 2026-08-09 (165 tests); Wave 3 done 2026-09-05 (measured perf pass); Wave 4 pending (`docs/audit-2026-07-06.md`).
+* **Repo audit #2 CLOSED** (2026-09-06): DP-8/9/10 Fixed; DP-11/12 Rejected (invalid). Actionable: PERF-1/2 (parked), UX-2, DP-14. Standing: SEC-3 ESCALATED (9 vulns, unreachable), SEC-5, META-5.
 * **Perf posture (Wave 3, 2026-09-05)**: NEW-5 closed — Hero LCP entry now paints at rest (observed LCP 1141→38ms). NEW-6 (dynamic `GamesSection`) and PERF-2 (LazyMotion) measured/parked — re-trigger: pair with PERF-1's still-open RSC split, or first-load JS becomes the binding score constraint.
 * **Token audit CLOSED** (2026-08-09): Waves 1–3 done — bounded digest, `git.md` split, first-read pointers, `src/` index, `polyglot.md` split, Continuation Protocol → Copilot adapter only (`GEMINI.md` excluded: Antigravity reads it agentically). Re-triggers: `polyglot.md` frontmatter + adapter note (`docs/token-efficiency-audit-2026-07-06.md`).
 * **DESIGN-1 CLOSED** (2026-08-07): tuned springs ratified; constant-duration beziers rule entry/transition.
 * **Hit-area policy** (2026-08-07): interactive == visual (24×24 px WCAG 2.5.8 floor); hamburger ≥44×44 px (Apple HIG) via invisible extensions.
 * **Stack & hosting** (2026-08-07): Next.js-only (unlocks TOK-2); Vercel stays, Cloudflare parked (re-trigger: backend/outgrow static).
-* **Security**: SEC-3 = 2 moderate postcss-in-next advisories (build-time, clears on Next re-pin). SEC-5 = preload submitted 2026-08-07, pending inclusion — HSTS directives must never be weakened (single-sourced `src/lib/security-headers.ts`). META-5 won't-fix (inline summaries).
+* **Security**: SEC-3 ESCALATED 2026-09-06 — audit 9 vulns/8 high incl. `next@16.2.9` itself; postcss+sharp unreachable (empty `images` allowlist blocks remote URLs). SEC-5 = preload submitted 2026-08-07, pending inclusion — HSTS directives must never be weakened (single-sourced `src/lib/security-headers.ts`). META-5 won't-fix (inline summaries).
 * **Contrast tokens**: `--accent-strong` #0071e3; `--accent` #2997ff (6.96:1 text-on-dark).
 * **Motion**: `useReducedMotion` gates entry/transition (additive only). **Standing lesson**: behavior-changing UI edits are browser-tested; never remove an affordance.
 * **Architecture**: five-layer `.ai/`; adapters point (never copy); minimal rules per charter.
@@ -24,6 +24,33 @@ per the protocol in [`../README.md`](../README.md).
 * **Visual/i18n/gates**: dark-mode-first tokens; en/pt catalogs (no hardcode); pre-commit `npm test` + commitlint; HTTPS dev.
 
 ---
+
+## 2026-09-06 — Audit #2 Wave 4: motion internals & structural (audit CLOSED, Waves 1–4 complete)
+
+**Decision:** Repository audit #2 is CLOSED. All findings across four waves have been triaged and disposed:
+
+**Fixed (2026-09-06):**
+- **DP-8** — `ScrollProgress.tsx` stale-closure reads: measurements written into refs at measurement time (not in passive effect), eliminating spurious bottom-edge bounce. Correctness fix, not perf: +58 B minified / +20 B gzip, no render-count or subscription-churn change.
+- **DP-9** — `useCarouselAutoplay.ts` sync complete cascade: now deferred one frame via `requestAnimationFrame` with cleanup, guarded by `activeRef`.
+- **DP-10** — `GamesSection.tsx` autoplay wrap slides backward: fixed by keying on `staged` (not indices), since autoplay is the only caller that sets `staged=true` on a 5→1 wrap.
+
+**Rejected (findings invalid):**
+- **DP-11** — `Navbar.tsx` `setTimeout(…, 0)` is NOT ceremony: lint-conformance machinery required by `eslint-config-next`'s `core-web-vitals` preset to avoid cascading renders. Cleanup exists; all effects in that file use the same pattern.
+- **DP-12** — `ScrollProgress.tsx` double ResizeObserver fire is FALSE: per the Resize Observer spec, one observer invokes its callback ONCE per broadcast with a *list* of entries. No double layout read exists; both observe targets are intentionally kept.
+
+**Still Open (no breaking change, re-triggers preserved):**
+- **PERF-1** — Hero/home RSC split (paired with PERF-2 for hydration chain benefit).
+- **PERF-2** — LazyMotion migration (justified only paired with PERF-1).
+- **NEW-6** — `next/dynamic` deferral of `GamesSection`: measured and reverted in Wave 3 (first-load JS regressed 266.8 → 273.7 KB gz; Next re-hoisted the split chunk). Re-trigger = the same as PERF-1/2.
+- **UX-2** — Dropdown per-item routes (awaits detail pages).
+- **DP-14** — Cached-broken-image bug (awaits real images).
+
+**Standing Dispositions (not debt):**
+- **SEC-3** — ESCALATED: `npm audit` 2 moderate → 9 vulns/8 high, and the driver is `next@16.2.9` itself (9 advisories, in-range `9.3.4-canary.0 - 16.3.0-preview.10`), which regresses SEC-2. postcss + sharp stay unreachable — `next.config.ts` declares no `images` block, so the remote allowlist is empty and the optimizer rejects every absolute URL before sharp runs; postcss is build-time only. Unresolved: GHSA-6gpp-xcg3-4w24 (App Router proxy/middleware bypass) would strip HSTS/CSP from the locale redirect that `src/proxy.ts` alone stamps — its "single locale" precondition looks not to hold (`routing.ts` = `['en','pt']`) but is unproven from the repo. No bumps here (separate gated front, now more urgent): `npm audit fix` is non-forced and `next >= 16.3.0` satisfies the existing range. **Re-trigger:** a real image reaching `ProjectCard`/`GameCard`, or any `images.remotePatterns`/`domains`/`dangerouslyAllowSVG` key; any route handler, `use server`, form, rewrite or outbound fetch; self-hosting off Vercel via `next start`; or `next` still `<16.3.0` after the next dependency window.
+- **SEC-5** — HSTS preload submission (2026-08-07, pending inclusion; external owner action).
+- **META-5** — Adapter inline duplication (accepted won't-fix tradeoff).
+
+**Why:** DP-8/9/10 are motion-internals fixes restoring correctness under edge cases. DP-11/12 were misdiagnosed — the spec and lint tooling confirm no changes needed. PERF-1/2 remain strategically deferred (RSC split is the binding constraint; neither ships alone). Standing dispositions are known, documented, and held; "zero open debt" is accurate when dispositions are counted as such.
 
 ## 2026-09-05 — Audit #2 Wave 3: measured performance pass (NEW-5 closed; NEW-6 & PERF-2 parked)
 

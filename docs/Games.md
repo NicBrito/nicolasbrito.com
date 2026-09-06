@@ -179,6 +179,9 @@ keyboard for ~1s — the bug this path fixes.
 - **Custom cubic-bezier easings** throughout (`EASE_OUT`, `EASE_IN`, `EASE_CSS`,
   `EASE_ACCEL`); the only spring is the configured (non-default) `CARD_SPRING`
   on the track translation.
+- **Deferred load rejected (2026-09-05):** `next/dynamic` was measured and
+  reverted — first-load JS regressed 266.8 → 273.7 KB gz because Next
+  re-hoisted the split chunk into the shared bundle (`decisions.md`, 2026-09-05).
 
 ## 5. Configuration
 

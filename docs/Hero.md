@@ -30,6 +30,8 @@ Visual and technical refinement of the Hero section to achieve the **"Apple Aest
 ### 4.1. Performance & Rendering
 * **Style Externalization:** Static and long Tailwind classes were moved outside the React render cycle to prevent unnecessary memory reallocation per frame.
 * **GPU Acceleration:** Applied `will-change: transform, opacity` to animated elements, forcing GPU composition and ensuring consistent 60fps animations.
+* **LCP-Safe Title Entry:** The `<h1>` name and role `<span>` render off a dedicated `titleVariants` — `y: 12 → 0` over a constant 0.8s cubic-bezier, declaring neither `opacity` nor `filter` — instead of the shared staged entry, so the page's LCP element paints opaque and unblurred in the first frame. Measured: observed LCP 1141 ms → 38 ms, now equal to observed FCP; Lighthouse's simulated headline 3009 ms → 2713 ms (median of 3 runs). Any entry animation that hides the heading's pixels (`opacity`, `blur`) re-delays LCP by construction — this constraint must hold through future refactors.
+* **Everything Else Unchanged:** The description and action-button row keep their original staged `opacity + y + blur(10px)` entry and stagger/delay; the social row keeps its own separate fade, untouched by this change. Under `prefers-reduced-motion` the title block gets no variant at all — fully static, strictly less motion than the default path.
 
 ### 4.2. Clean Code
 * **Cleanup:** Removal of all dead code, residual comments, and unused imports.

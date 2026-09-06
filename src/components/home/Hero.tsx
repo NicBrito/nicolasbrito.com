@@ -35,6 +35,17 @@ const reducedTextVariants: Variants = {
   visible: { opacity: 1, transition: { duration: 0.3 } },
 };
 
+// The title block is the LCP element (NEW-5): declaring neither opacity nor
+// filter keeps them out of the SSR'd style, so the heading paints at rest and
+// only slides the last 12px in.
+const titleVariants: Variants = {
+  hidden: { y: 12 },
+  visible: {
+    y: 0,
+    transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] },
+  },
+};
+
 export function Hero() {
   const t = useTranslations("Hero");
   const locale = useLocale();
@@ -46,6 +57,9 @@ export function Hero() {
   );
 
   const entryVariants = reduced ? reducedTextVariants : textVariants;
+  // No variant at all under reduced motion: the title block is static from the
+  // first frame, which is strictly less motion than the staged entry.
+  const titleEntryVariants = reduced ? undefined : titleVariants;
 
   return (
     <section
@@ -63,14 +77,14 @@ export function Hero() {
         >
           <div className="flex flex-col items-center justify-center -space-y-1 sm:-space-y-2">
             <motion.h1
-              variants={entryVariants}
+              variants={titleEntryVariants}
               className="text-[clamp(2.5rem,calc(0.333rem+10.833vw),9rem)] font-bold tracking-tighter text-foreground leading-none"
             >
               {t('name')}
             </motion.h1>
 
             <motion.span
-              variants={entryVariants}
+              variants={titleEntryVariants}
               className="text-[clamp(1.5rem,7.5vw,6rem)] font-bold tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-foreground/80 to-foreground/40 leading-tight pb-2"
             >
               {t('role')}
